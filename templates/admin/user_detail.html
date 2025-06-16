@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail User - Room Booking System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 10px;
+            margin: 5px 0;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+        .stats-card.success {
+            background: linear-gradient(135deg, #00d2d3, #54a0ff);
+        }
+        .stats-card.warning {
+            background: linear-gradient(135deg, #feca57, #ff9ff3);
+        }
+        .stats-card.danger {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        }
+        .user-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            margin: 0 auto;
+        }
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .booking-status {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-approved {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+        .main-content {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        .btn-action {
+            border-radius: 10px;
+            padding: 8px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .table thead th {
+            background: #f8f9fa;
+            border: none;
+            font-weight: 600;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">Admin Panel</h4>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{{ url_for('admin_users') }}">
+                                <i class="fas fa-users me-2"></i>
+                                Kelola User
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin_roles') }}">
+                                <i class="fas fa-user-tag me-2"></i>
+                                Kelola Role
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-door-open me-2"></i>
+                                Kelola Ruangan
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-calendar-check me-2"></i>
+                                Kelola Booking
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Kelola Sanksi
+                            </a>
+                        </li>
+                    </ul>
+                    <hr class="text-white">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+                    <div>
+                        <h1 class="h2">Detail User</h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item">
+                                    <a href="{{ url_for('admin_dashboard') }}" class="text-decoration-none">Dashboard</a>
+                                </li>
+                                <li class="breadcrumb-item">
+                                    <a href="{{ url_for('admin_users') }}" class="text-decoration-none">Kelola User</a>
+                                </li>
+                                <li class="breadcrumb-item active">Detail User</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- User Profile Card -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body p-4">
+                                <div class="row">
+                                    <div class="col-md-3 text-center">
+                                        <div class="user-avatar mb-3">
+                                            {{ user.username[0].upper() }}
+                                        </div>
+                                        <h5 class="mb-2">{{ user.username }}</h5>
+                                        <span class="status-badge {{ 'status-active' if user.is_active else 'status-inactive' }}">
+                                            <i class="fas fa-circle me-1"></i>
+                                            {{ 'Aktif' if user.is_active else 'Tidak Aktif' }}
+                                        </span>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="text-muted mb-2">Informasi Dasar</h6>
+                                                <table class="table table-borderless table-sm">
+                                                    <tr>
+                                                        <td><strong>Email:</strong></td>
+                                                        <td>{{ user.email }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Role:</strong></td>
+                                                        <td>
+                                                            <span class="badge bg-primary">{{ user.role_obj.name.title() }}</span>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Terdaftar:</strong></td>
+                                                        <td>{{ user.created_at.strftime('%d %B %Y') }}</td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6 class="text-muted mb-2">Aksi</h6>
+                                                <div class="d-flex gap-2">
+                                                    <a href="{{ url_for('admin_edit_user', user_id=user.id) }}" 
+                                                       class="btn btn-warning btn-action">
+                                                        <i class="fas fa-edit me-1"></i> Edit
+                                                    </a>
+                                                    {% if user.id != session['user_id'] %}
+                                                    <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.id) }}" 
+                                                          class="d-inline" onsubmit="return confirm('Yakin ingin menghapus user ini?')">
+                                                        <button type="submit" class="btn btn-danger btn-action">
+                                                            <i class="fas fa-trash me-1"></i> Hapus
+                                                        </button>
+                                                    </form>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-calendar-alt fa-2x mb-2"></i>
+                                <h3 class="mb-1">{{ user_stats.total_bookings }}</h3>
+                                <p class="mb-0">Total Booking</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card success">
+                            <div class="card-body text-center">
+                                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                <h3 class="mb-1">{{ user_stats.approved_bookings }}</h3>
+                                <p class="mb-0">Booking Disetujui</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card warning">
+                            <div class="card-body text-center">
+                                <i class="fas fa-clock fa-2x mb-2"></i>
+                                <h3 class="mb-1">{{ user_stats.pending_bookings }}</h3>
+                                <p class="mb-0">Booking Pending</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card danger">
+                            <div class="card-body text-center">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                <h3 class="mb-1">{{ user_stats.active_sanctions }}</h3>
+                                <p class="mb-0">Sanksi Aktif</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Bookings -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-history me-2"></i>
+                                    Booking Terbaru
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                {% if recent_bookings %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Ruangan</th>
+                                                <th>Tanggal</th>
+                                                <th>Waktu</th>
+                                                <th>Status</th>
+                                                <th>Tujuan</th>
+                                                <th>Dibuat</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for booking in recent_bookings %}
+                                            <tr>
+                                                <td><strong>#{{ booking.id }}</strong></td>
+                                                <td>{{ booking.room.name }}</td>
+                                                <td>{{ booking.booking_date.strftime('%d/%m/%Y') }}</td>
+                                                <td>{{ booking.start_time.strftime('%H:%M') }} - {{ booking.end_time.strftime('%H:%M') }}</td>
+                                                <td>
+                                                    <span class="booking-status status-{{ booking.status.value }}">
+                                                        {% if booking.status.value == 'pending' %}
+                                                            <i class="fas fa-clock me-1"></i> Pending
+                                                        {% elif booking.status.value == 'approved' %}
+                                                            <i class="fas fa-check me-1"></i> Disetujui
+                                                        {% elif booking.status.value == 'rejected' %}
+                                                            <i class="fas fa-times me-1"></i> Ditolak
+                                                        {% elif booking.status.value == 'completed' %}
+                                                            <i class="fas fa-check-circle me-1"></i> Selesai
+                                                        {% endif %}
+                                                    </span>
+                                                </td>
+                                                <td>{{ booking.purpose[:50] + '...' if booking.purpose and booking.purpose|length > 50 else booking.purpose or '-' }}</td>
+                                                <td>{{ booking.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">Belum ada booking</h5>
+                                    <p class="text-muted">User ini belum pernah melakukan booking ruangan.</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

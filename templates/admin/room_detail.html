@@ -1,0 +1,222 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Detail Ruangan{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Detail Ruangan</h1>
+            <div>
+                <a href="{{ url_for('admin_edit_room', room_id=room.id) }}" class="btn btn-warning me-2">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+                <a href="{{ url_for('admin_rooms') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Kembali
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Room Information Card -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-door-open"></i> Informasi Ruangan</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-tag"></i> Nama Ruangan
+                    </label>
+                    <p class="form-control-plaintext">{{ room.name }}</p>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-users"></i> Kapasitas
+                    </label>
+                    <p class="form-control-plaintext">
+                        <span class="badge bg-primary fs-6">{{ room.capacity }} orang</span>
+                    </p>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-info-circle"></i> Status
+                    </label>
+                    <p class="form-control-plaintext">
+                        {% if room.is_active %}
+                            <span class="badge bg-success"><i class="fas fa-check-circle"></i> Aktif</span>
+                        {% else %}
+                            <span class="badge bg-danger"><i class="fas fa-times-circle"></i> Tidak Aktif</span>
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-align-left"></i> Deskripsi
+                    </label>
+                    <div class="form-control-plaintext">
+                        {% if room.description %}
+                            {{ room.description }}
+                        {% else %}
+                            <em class="text-muted">Tidak ada deskripsi</em>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar"></i> Dibuat: {{ room.created_at.strftime('%d/%m/%Y %H:%M') }}
+                        </small>
+                    </div>
+                    <div class="col-12 mt-1">
+                        <small class="text-muted">
+                            ID: {{ room.id }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Card -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar"></i> Statistik Booking</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="border rounded p-3 mb-3">
+                            <h3 class="text-primary">{{ room_stats.total_bookings }}</h3>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar-alt"></i> Total Booking
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border rounded p-3 mb-3">
+                            <h3 class="text-success">{{ room_stats.approved_bookings }}</h3>
+                            <small class="text-muted">
+                                <i class="fas fa-check"></i> Disetujui
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border rounded p-3 mb-3">
+                            <h3 class="text-warning">{{ room_stats.pending_bookings }}</h3>
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i> Pending
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border rounded p-3 mb-3">
+                            <h3 class="text-info">{{ room_stats.completed_bookings }}</h3>
+                            <small class="text-muted">
+                                <i class="fas fa-check-double"></i> Selesai
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Bookings Card -->
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-history"></i> Booking Terbaru</h5>
+                <small class="text-muted">10 booking terakhir</small>
+            </div>
+            <div class="card-body">
+                {% if recent_bookings %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th><i class="fas fa-user"></i> User</th>
+                                    <th><i class="fas fa-calendar"></i> Tanggal</th>
+                                    <th><i class="fas fa-clock"></i> Waktu</th>
+                                    <th><i class="fas fa-info-circle"></i> Status</th>
+                                    <th><i class="fas fa-align-left"></i> Tujuan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in recent_bookings %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle me-2">
+                                                {{ booking.user.username[0].upper() }}
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">{{ booking.user.username }}</div>
+                                                <small class="text-muted">{{ booking.user.email }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold">{{ booking.booking_date.strftime('%d/%m/%Y') }}</span>
+                                    </td>
+                                    <td>
+                                        <small>
+                                            {{ booking.start_time.strftime('%H:%M') }} - 
+                                            {{ booking.end_time.strftime('%H:%M') }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if booking.status.value == 'pending' %}
+                                            <span class="badge bg-warning"><i class="fas fa-clock"></i> Pending</span>
+                                        {% elif booking.status.value == 'approved' %}
+                                            <span class="badge bg-success"><i class="fas fa-check"></i> Disetujui</span>
+                                        {% elif booking.status.value == 'rejected' %}
+                                            <span class="badge bg-danger"><i class="fas fa-times"></i> Ditolak</span>
+                                        {% elif booking.status.value == 'completed' %}
+                                            <span class="badge bg-info"><i class="fas fa-check-double"></i> Selesai</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if booking.purpose %}
+                                            <small class="text-muted">{{ booking.purpose[:50] }}{% if booking.purpose|length > 50 %}...{% endif %}</small>
+                                        {% else %}
+                                            <em class="text-muted">-</em>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Belum ada riwayat booking untuk ruangan ini</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+</style>
+{% endblock %}

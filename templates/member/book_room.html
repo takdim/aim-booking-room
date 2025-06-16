@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Room - {{ room.name }}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .navbar-brand {
+            color: white !important;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .navbar-nav .nav-link {
+            color: white !important;
+            font-weight: 500;
+            margin: 0 5px;
+            padding: 8px 16px !important;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .main-content {
+            padding: 40px 0;
+        }
+        
+        .booking-form-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        
+        .room-info-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            color: white;
+        }
+        
+        .date-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .date-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .date-card:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        
+        .date-card.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #ffffff;
+            color: white;
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+        }
+        
+        .date-card.booked {
+            background: rgba(255, 107, 107, 0.2);
+            border-color: rgba(255, 107, 107, 0.5);
+            color: #ff6b6b;
+            cursor: not-allowed;
+        }
+        
+        .date-card.booked:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .date-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .date-day {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .date-month {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        
+        .date-status {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        
+        .btn-primary:disabled {
+            background: rgba(108, 117, 125, 0.5);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-outline-secondary {
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 12px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-secondary:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: white;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .alert {
+            border-radius: 15px;
+            padding: 20px;
+            border: none;
+            backdrop-filter: blur(10px);
+        }
+        
+        .alert-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+        }
+        
+        .alert-success {
+            background: linear-gradient(135deg, #5cb85c 0%, #449d44 100%);
+            color: white;
+        }
+        
+        .alert-info {
+            background: linear-gradient(135deg, #54a0ff 0%, #2e86de 100%);
+            color: white;
+        }
+        
+        .time-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .time-info h5 {
+            color: #fff;
+            margin-bottom: 15px;
+        }
+        
+        .time-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 0 10px;
+            display: inline-block;
+        }
+        
+        .existing-bookings {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .booking-item {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .selected-dates-counter {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin: 15px 0;
+            text-align: center;
+            color: white;
+        }
+        
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .booking-summary {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px 0;
+            color: white;
+        }
+        
+        .selected-dates-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .selected-date-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-building"></i> Room Booking
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/member/dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/member/bookings">
+                            <i class="fas fa-calendar-alt"></i> My Bookings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/member/profile">
+                            <i class="fas fa-user"></i> Profile
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                            <i class="fas fa-{{ 'exclamation-circle' if category == 'error' else 'check-circle' }} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Error Display -->
+            {% if error %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            <div class="row">
+                <!-- Room Information -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card room-info-card h-100">
+                        <div class="card-body">
+                            <h4 class="card-title">
+                                <i class="fas fa-door-open me-2"></i>
+                                {{ room.name }}
+                            </h4>
+                            <p class="card-text">{{ room.description or 'No description available' }}</p>
+                            <div class="mb-3">
+                                <strong><i class="fas fa-users me-2"></i>Kapasitas:</strong> {{ room.capacity }} orang
+                            </div>
+                            
+                            <!-- Time Information -->
+                            <div class="time-info">
+                                <h6><i class="fas fa-clock me-2"></i>Waktu Tetap</h6>
+                                <div>
+                                    <span class="time-badge">08:30 - 15:40</span>
+                                </div>
+                                <small class="d-block mt-2 opacity-75">Durasi: 7 jam 10 menit</small>
+                            </div>
+                            
+                            <!-- Existing Bookings -->
+                            {% if booking_details %}
+                                <h6 class="mt-4"><i class="fas fa-calendar-check me-2"></i>Booking Terjadwal</h6>
+                                <div class="existing-bookings">
+                                    {% for detail in booking_details %}
+                                        <div class="booking-item">
+                                            <div class="small">
+                                                <strong>{{ detail.date.strftime('%d/%m/%Y') }}</strong><br>
+                                                08:30 - 15:40<br>
+                                                <span class="badge bg-{{ 'warning' if detail.status.value == 'pending' else 'success' }}">
+                                                    {{ detail.status.value.title() }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Booking Form -->
+                <div class="col-lg-8">
+                    <div class="card booking-form-card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-plus-circle me-2"></i>
+                                Pilih Tanggal Booking
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" id="bookingForm">
+                                <!-- Selected Dates Counter -->
+                                <div class="selected-dates-counter">
+                                    <i class="fas fa-calendar-check me-2"></i>
+                                    <span id="selectedCount">0</span> / 7 hari dipilih
+                                </div>
+                                
+                                <!-- Date Selection Grid -->
+                                <div class="date-selection" id="dateSelection">
+                                    <!-- Dates will be populated by JavaScript -->
+                                </div>
+                                
+                                <!-- Booking Summary -->
+                                <div class="booking-summary" id="bookingSummary" style="display: none;">
+                                    <h6><i class="fas fa-calendar-alt me-2"></i>Tanggal yang Dipilih:</h6>
+                                    <div class="selected-dates-list" id="selectedDatesList">
+                                        <!-- Selected dates will be shown here -->
+                                    </div>
+                                </div>
+                                
+                                <!-- Hidden input for selected dates -->
+                                <input type="hidden" name="selected_dates" id="selectedDates">
+                                
+                                <div class="mb-4">
+                                    <label for="purpose" class="form-label">
+                                        <i class="fas fa-clipboard-list me-2"></i>Keperluan/Tujuan
+                                    </label>
+                                    <textarea class="form-control" 
+                                              id="purpose" 
+                                              name="purpose" 
+                                              rows="4" 
+                                              placeholder="Jelaskan keperluan booking ruangan ini..."
+                                              required></textarea>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle me-2"></i>Ketentuan Booking:</h6>
+                                    <ul class="mb-0 small">
+                                        <li>Waktu booking tetap: 08:30 - 15:40 (7 jam 10 menit)</li>
+                                        <li>Maksimal pilih 7 hari sekaligus</li>
+                                        <li>Booking minimal 2 hari dari sekarang</li>
+                                        <li>Booking akan menunggu persetujuan admin</li>
+                                        <li><strong>Satu member hanya dapat memiliki 1 booking aktif (yang sudah disetujui)</strong></li>
+                                        <li>Member dapat booking lagi setelah booking sebelumnya completed atau rejected</li>
+                                        <li>Tidak dapat booking jika memiliki sanksi aktif</li>
+                                    </ul>
+                                </div>
+
+                                <div class="d-flex gap-3">
+                                    <button type="submit" class="btn btn-primary flex-grow-1" id="submitBtn" disabled>
+                                        <i class="fas fa-paper-plane me-2"></i>Submit Booking
+                                    </button>
+                                    <a href="/member/dashboard" class="btn btn-outline-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Kembali
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Generate available dates (2 days from today + 21 days total)
+        const today = new Date();
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() + 2); // Start from 2 days from today
+        
+        // Get booked dates from backend
+        const bookedDates = [
+            {% for date in booked_dates %}
+            '{{ date.strftime('%Y-%m-%d') }}',
+            {% endfor %}
+        ];
+        
+        const dateNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        
+        let selectedDates = [];
+        const maxSelections = 7;
+        
+        // Generate date cards
+        function generateDateCards() {
+            const dateSelection = document.getElementById('dateSelection');
+            dateSelection.innerHTML = '';
+            
+            // Generate 21 days starting from 2 days from today
+            for (let i = 0; i < 21; i++) {
+                const currentDate = new Date(startDate);
+                currentDate.setDate(startDate.getDate() + i);
+                
+                const dateString = currentDate.toISOString().split('T')[0];
+                const isBooked = bookedDates.includes(dateString);
+                
+                const dateCard = document.createElement('div');
+                dateCard.className = `date-card ${isBooked ? 'booked' : ''}`;
+                dateCard.dataset.date = dateString;
+                
+                if (!isBooked) {
+                    dateCard.addEventListener('click', () => toggleDateSelection(dateString, dateCard));
+                }
+                
+                dateCard.innerHTML = `
+                    <div class="date-number">${currentDate.getDate()}</div>
+                    <div class="date-day">${dateNames[currentDate.getDay()]}</div>
+                    <div class="date-month">${monthNames[currentDate.getMonth()]}</div>
+                    ${isBooked ? '<div class="date-status">Booked</div>' : ''}
+                `;
+                
+                dateSelection.appendChild(dateCard);
+            }
+        }
+        
+        // Toggle date selection
+        function toggleDateSelection(dateString, dateCard) {
+            if (dateCard.classList.contains('booked')) return;
+            
+            if (selectedDates.includes(dateString)) {
+                // Remove selection
+                selectedDates = selectedDates.filter(date => date !== dateString);
+                dateCard.classList.remove('selected');
+            } else {
+                // Add selection (if under limit)
+                if (selectedDates.length < maxSelections) {
+                    selectedDates.push(dateString);
+                    dateCard.classList.add('selected');
+                } else {
+                    alert(`Maksimal ${maxSelections} hari yang dapat dipilih!`);
+                    return;
+                }
+            }
+            
+            updateSelectedCount();
+            updateSubmitButton();
+            updateHiddenInput();
+            updateBookingSummary();
+        }
+        
+        // Update selected count display
+        function updateSelectedCount() {
+            document.getElementById('selectedCount').textContent = selectedDates.length;
+        }
+        
+        // Update submit button state
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = selectedDates.length === 0;
+        }
+        
+        // Update hidden input with selected dates
+        function updateHiddenInput() {
+            document.getElementById('selectedDates').value = selectedDates.sort().join(',');
+        }
+        
+        // Update booking summary
+        function updateBookingSummary() {
+            const summaryDiv = document.getElementById('bookingSummary');
+            const datesList = document.getElementById('selectedDatesList');
+            
+            if (selectedDates.length > 0) {
+                summaryDiv.style.display = 'block';
+                datesList.innerHTML = '';
+                
+                // Sort dates and display them
+                const sortedDates = selectedDates.sort();
+                sortedDates.forEach(dateString => {
+                    const date = new Date(dateString);
+                    const dateItem = document.createElement('div');
+                    dateItem.className = 'selected-date-item';
+                    dateItem.innerHTML = `
+                        <strong>${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}</strong>
+                        <small class="d-block">${dateNames[date.getDay()]}, 08:30 - 15:40</small>
+                    `;
+                    datesList.appendChild(dateItem);
+                });
+            } else {
+                summaryDiv.style.display = 'none';
+            }
+        }
+        
+        // Form validation before submit
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            if (selectedDates.length === 0) {
+                e.preventDefault();
+                alert('Pilih minimal 1 tanggal untuk booking!');
+                return;
+            }
+            
+            const purpose = document.getElementById('purpose').value.trim();
+            if (!purpose) {
+                e.preventDefault();
+                alert('Keperluan/tujuan harus diisi!');
+                return;
+            }
+            
+            // Confirm booking
+            const confirmMessage = `Konfirmasi booking untuk ${selectedDates.length} hari?\n\nTanggal: ${selectedDates.sort().join(', ')}\nWaktu: 08:30 - 15:40\nKeperluan: ${purpose}`;
+            if (!confirm(confirmMessage)) {
+                e.preventDefault();
+                return;
+            }
+        });
+        
+        // Initialize
+        generateDateCards();
+        updateSelectedCount();
+        updateSubmitButton();
+    </script>
+</body>
+</html>

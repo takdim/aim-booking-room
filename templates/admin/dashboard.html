@@ -1,0 +1,117 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Dashboard Admin</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-8">
+                        <h4>{{ stats.total_users }}</h4>
+                        <p class="card-text">Total User</p>
+                    </div>
+                    <div class="col-4">
+                        <i class="fas fa-users fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-8">
+                        <h4>{{ stats.total_rooms }}</h4>
+                        <p class="card-text">Total Ruangan</p>
+                    </div>
+                    <div class="col-4">
+                        <i class="fas fa-door-open fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-8">
+                        <h4>{{ stats.total_bookings }}</h4>
+                        <p class="card-text">Total Booking</p>
+                    </div>
+                    <div class="col-4">
+                        <i class="fas fa-calendar fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-8">
+                        <h4>{{ stats.pending_bookings }}</h4>
+                        <p class="card-text">Booking Pending</p>
+                    </div>
+                    <div class="col-4">
+                        <i class="fas fa-clock fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-users"></i> Management User</h5>
+            </div>
+            <div class="card-body">
+                <p>Kelola user, tambah user baru, edit, dan hapus user.</p>
+                <a href="{{ url_for('admin_users') }}" class="btn btn-primary">
+                    <i class="fas fa-users"></i> Kelola User
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-user-tag"></i> Management Role</h5>
+            </div>
+            <div class="card-body">
+                <p>Kelola role dan permissions dalam sistem.</p>
+                <a href="{{ url_for('admin_roles') }}" class="btn btn-primary">
+                    <i class="fas fa-user-tag"></i> Kelola Role
+                </a>
+            </div>
+        </div>
+    </div>
+        <div class="col-md-6">
+            <br>
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-user-tag"></i> Management Room</h5>
+            </div>
+            <div class="card-body">
+                <p>Kelola room dan permissions dalam room.</p>
+                <a href="{{ url_for('admin_rooms') }}" class="btn btn-primary">
+                    <i class="fas fa-user-tag"></i> Kelola Room
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit User - Room Booking System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 10px;
+            margin: 5px 0;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        .main-content {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+        }
+        .alert {
+            border-radius: 10px;
+            border: none;
+            padding: 15px 20px;
+        }
+        .form-check {
+            margin: 15px 0;
+        }
+        .form-check-input {
+            width: 20px;
+            height: 20px;
+            border-radius: 5px;
+            border: 2px solid #dee2e6;
+        }
+        .form-check-input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        .form-check-label {
+            font-weight: 500;
+            margin-left: 10px;
+        }
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            margin: 0 auto 20px;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+            z-index: 10;
+        }
+        .password-input-wrapper {
+            position: relative;
+        }
+        .form-text {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .required {
+            color: #dc3545;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">Admin Panel</h4>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{{ url_for('admin_users') }}">
+                                <i class="fas fa-users me-2"></i>
+                                Kelola User
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin_roles') }}">
+                                <i class="fas fa-user-tag me-2"></i>
+                                Kelola Role
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-door-open me-2"></i>
+                                Kelola Ruangan
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-calendar-check me-2"></i>
+                                Kelola Booking
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Kelola Sanksi
+                            </a>
+                        </li>
+                    </ul>
+                    <hr class="text-white">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+                    <div>
+                        <h1 class="h2">Edit User</h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item">
+                                    <a href="{{ url_for('admin_dashboard') }}" class="text-decoration-none">Dashboard</a>
+                                </li>
+                                <li class="breadcrumb-item">
+                                    <a href="{{ url_for('admin_users') }}" class="text-decoration-none">Kelola User</a>
+                                </li>
+                                <li class="breadcrumb-item active">Edit User</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Error Alert -->
+                {% if error %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {{ error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endif %}
+
+                <!-- Edit User Form -->
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header bg-white text-center py-4">
+                                <div class="user-avatar">
+                                    {{ user.username[0].upper() }}
+                                </div>
+                                <h4 class="mb-0">Edit User: {{ user.username }}</h4>
+                                <p class="text-muted mb-0">Ubah informasi user di bawah ini</p>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="info-box">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Catatan:</strong> Kosongkan field password jika tidak ingin mengubah password user.
+                                </div>
+
+                                <form method="POST" novalidate>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="username" class="form-label">
+                                                    Username <span class="required">*</span>
+                                                </label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-user"></i>
+                                                    </span>
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           id="username" 
+                                                           name="username" 
+                                                           value="{{ user.username }}"
+                                                           required>
+                                                </div>
+                                                <div class="form-text">Username harus unik dan tidak boleh kosong.</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="email" class="form-label">
+                                                    Email <span class="required">*</span>
+                                                </label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-envelope"></i>
+                                                    </span>
+                                                    <input type="email" 
+                                                           class="form-control" 
+                                                           id="email" 
+                                                           name="email" 
+                                                           value="{{ user.email }}"
+                                                           required>
+                                                </div>
+                                                <div class="form-text">Email harus valid dan belum digunakan user lain.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="password" class="form-label">
+                                                    Password Baru
+                                                </label>
+                                                <div class="password-input-wrapper">
+                                                    <div class="input-group">
+                                                        <span class="input-group-text">
+                                                            <i class="fas fa-lock"></i>
+                                                        </span>
+                                                        <input type="password" 
+                                                               class="form-control" 
+                                                               id="password" 
+                                                               name="password" 
+                                                               placeholder="Kosongkan jika tidak ingin mengubah">
+                                                        <span class="password-toggle" onclick="togglePassword('password')">
+                                                            <i class="fas fa-eye" id="password-eye"></i>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="form-text">Minimal 6 karakter. Kosongkan jika tidak ingin mengubah.</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="role_id" class="form-label">
+                                                    Role <span class="required">*</span>
+                                                </label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-user-tag"></i>
+                                                    </span>
+                                                    <select class="form-select" id="role_id" name="role_id" required>
+                                                        <option value="">Pilih Role</option>
+                                                        {% for role in roles %}
+                                                        <option value="{{ role.id }}" 
+                                                                {{ 'selected' if role.id == user.role_id else '' }}>
+                                                            {{ role.name.title() }} - {{ role.description }}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="form-text">Tentukan level akses user dalam sistem.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" 
+                                                   type="checkbox" 
+                                                   id="is_active" 
+                                                   name="is_active"
+                                                   {{ 'checked' if user.is_active else '' }}>
+                                            <label class="form-check-label" for="is_active">
+                                                <i class="fas fa-toggle-on me-2 text-success"></i>
+                                                User Aktif
+                                            </label>
+                                        </div>
+                                        <div class="form-text ms-4">
+                                            User yang tidak aktif tidak dapat login ke sistem.
+                                        </div>
+                                    </div>
+
+                                    <hr>
+
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="text-muted">
+                                            <small>
+                                                <i class="fas fa-calendar me-1"></i>
+                                                Terdaftar: {{ user.created_at.strftime('%d %B %Y') }}
+                                            </small>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">
+                                                <i class="fas fa-arrow-left me-2"></i>
+                                                Kembali
+                                            </a>
+                                            <a href="{{ url_for('admin_user_detail', user_id=user.id) }}" class="btn btn-outline-primary">
+                                                <i class="fas fa-eye me-2"></i>
+                                                Lihat Detail
+                                            </a>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-save me-2"></i>
+                                                Simpan Perubahan
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            const eyeIcon = document.getElementById(fieldId + '-eye');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        }
+
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const role_id = document.getElementById('role_id').value;
+
+            let isValid = true;
+            let errors = [];
+
+            // Validate required fields
+            if (!username) {
+                errors.push('Username tidak boleh kosong');
+                isValid = false;
+            }
+
+            if (!email) {
+                errors.push('Email tidak boleh kosong');
+                isValid = false;
+            }
+
+            if (!role_id) {
+                errors.push('Role harus dipilih');
+                isValid = false;
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email && !emailRegex.test(email)) {
+                errors.push('Format email tidak valid');
+                isValid = false;
+            }
+
+            // Validate password length if provided
+            if (password && password.length < 6) {
+                errors.push('Password minimal 6 karakter');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                alert('Terdapat kesalahan dalam form:\n\n' + errors.join('\n'));
+            }
+        });
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
