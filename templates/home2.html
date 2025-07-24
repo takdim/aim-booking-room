@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Beranda - Room Booking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset & base */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: #fff;
+            color: #611514;
+            line-height: 1.4;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-size: 14px;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Header */
+        header {
+            background: #611514;
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);
+        }
+        
+        header .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        header .logo-text {
+            font-weight: 700;
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        nav {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+            font-weight: 600;
+        }
+        
+        nav a {
+            color: #fad54c;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            transition: color 0.3s ease;
+        }
+        
+        nav a:hover,
+        nav a.active {
+            color: white;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .btn-signup {
+            background: #8c1a1a;
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            padding: 8px 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .btn-signup:hover {
+            background: #a72727;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: #611514;
+            color: white;
+            padding: 4rem 0;
+        }
+        
+        .stats-card {
+            background: #8c1a1a;
+            border: none;
+            border-radius: 12px;
+            color: white;
+        }
+
+        /* Main container */
+        main {
+            flex-grow: 1;
+            padding: 48px 24px 64px;
+        }
+
+        /* Grid container for room cards - NEW SPLIT LAYOUT */
+        .rooms-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .rooms-column {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .column-title {
+            text-align: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: #611514;
+            margin-bottom: 24px;
+            padding: 12px 0;
+            border-bottom: 3px solid #611514;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .room-card-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Room Card styles - similar to the paste design */
+        .room-card {
+            display: grid;
+            grid-template-columns: 48px 1fr auto;
+            align-items: center;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 4px 6px rgb(0 0 0 / 0.1);
+            gap: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .room-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(97, 21, 20, 0.15);
+        }
+
+        /* Room number styling */
+        .room-number {
+            font-size: 24px;
+            font-weight: 800;
+            color: #611514;
+            justify-self: center;
+            user-select: none;
+        }
+
+        .room-content {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            user-select: none;
+            color: #611514;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .room-content strong {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .room-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        /* Color variants for cards */
+        .room-card.card-dark {
+            background-color: #611514;
+            color: white;
+            box-shadow: none;
+        }
+
+        .room-card.card-dark .room-number {
+            color: white;
+        }
+
+        .room-card.card-dark .room-content {
+            color: white;
+        }
+
+        .room-card.card-light {
+            background-color: #eee;
+        }
+
+        .room-card.card-light .room-number {
+            color: #611514;
+            font-weight: 700;
+        }
+
+        .room-card.card-light .room-content {
+            color: #611514;
+        }
+
+        .room-card.booked-today {
+            border-left: 5px solid #dc3545;
+        }
+
+        /* Button styles */
+        .btn-schedule {
+            background: #611514;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 16px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            font-size: 11px;
+            color: white;
+        }
+        
+        .btn-schedule:hover {
+            background: #8c1a1a;
+            transform: translateY(-1px);
+        }
+        
+        .btn-book-now {
+            background: #8c1a1a;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 16px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            font-size: 11px;
+            color: white;
+        }
+        
+        .btn-book-now:hover {
+            background: #a72727;
+            transform: translateY(-1px);
+        }
+
+
+
+
+    </style>
+</head>
+
+    <!-- Header -->
+    <header role="banner" aria-label="Halaman header Room Booking">
+        <div class="logo-container" aria-label="Logo Room Booking">
+            <i class="fas fa-building" style="font-size: 24px;"></i>
+            <div class="logo-text">Room Booking<br />System</div>
+        </div>
+        <nav role="navigation" aria-label="Menu navigasi utama">
+            <a href="#" class="">Aturan Penggunaan</a>
+            <a href="/" class="active">Informasi Ruangan</a>
+        </nav>
+        <div class="header-right">
+            <a href="/login" class="btn-signup">
+                <i class="fas fa-sign-in-alt me-1"></i>Login
+            </a>
+            <a href="/register" class="btn-signup">
+                <i class="fas fa-user-plus me-1"></i>Register
+            </a>
+        </div>
+    </header>
+{% block content %}
+
+{% endblock %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</html>

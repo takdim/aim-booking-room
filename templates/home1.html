@@ -1,0 +1,676 @@
+{% extends "template.html" %}
+{% block content %}
+<style>
+        /* Footer */
+        footer {
+            background: #611514;
+            color: white;
+            padding: 24px 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 767px) {
+            header {
+                flex-wrap: wrap;
+                gap: 12px;
+                clip-path: none;
+            }
+            
+            nav {
+                width: 100%;
+                justify-content: space-around;
+                gap: 0;
+                font-weight: 700;
+                font-size: 14px;
+            }
+            
+            .header-right {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            
+            .btn-signup {
+                padding: 10px 16px;
+            }
+            
+            .hero-section {
+                padding: 2rem 0;
+            }
+            
+            .hero-section .display-4 {
+                font-size: 2rem;
+            }
+
+            /* Mobile: Stack columns vertically */
+            .rooms-container {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .room-card {
+                grid-template-columns: 40px 1fr;
+                grid-template-rows: auto auto;
+                gap: 8px;
+            }
+
+            .room-actions {
+                grid-column: 1 / -1;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 8px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .rooms-container {
+                gap: 24px;
+            }
+        }
+
+        @media (min-width: 1440px) {
+            main {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding-left: 80px;
+                padding-right: 80px;
+            }
+        }
+            /* Modal Styles */
+        .schedule-modal .modal-content {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .schedule-header {
+            background: #611514;
+            color: white;
+            border-radius: 12px 12px 0 0;
+            padding: 1.5rem;
+        }
+        
+        .date-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .date-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgb(0 0 0 / 0.1);
+        }
+        
+        .date-card.today {
+            border-color: #611514;
+            background: #611514;
+            color: white;
+        }
+        
+        .date-card.booked {
+            border-color: #dc3545;
+            background: #dc3545;
+            color: white;
+        }
+        
+        .date-card.available {
+            border-color: #28a745;
+            background: #28a745;
+            color: white;
+        }
+        
+        .date-card.past {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            opacity: 0.7;
+        }
+        
+        .booking-time-modal {
+            font-size: 0.85rem;
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            margin: 0.25rem 0;
+            display: inline-block;
+        }
+        
+        .schedule-grid {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .schedule-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .schedule-grid::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .schedule-grid::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        
+        .loading-spinner {
+            display: none;
+        }
+        
+        /* Booking status indicators */
+        .booking-status {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+        
+        .status-pending {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .status-approved {
+            background: #28a745;
+            color: white;
+        }
+
+        .booking-time {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 2px;
+        }
+
+        .room-card.card-light .booking-time {
+            color: #666;
+        }
+
+        .booker-info {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 4px;
+        }
+
+        .room-card.card-light .booker-info {
+            color: #888;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #611514;
+            grid-column: 1 / -1;
+        }
+                /* Room Card styles - similar to the paste design */
+        .room-card {
+            display: grid;
+            grid-template-columns: 48px 1fr auto;
+            align-items: center;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 4px 6px rgb(0 0 0 / 0.1);
+            gap: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .room-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(97, 21, 20, 0.15);
+        }
+
+        /* Room number styling */
+        .room-number {
+            font-size: 24px;
+            font-weight: 800;
+            color: #611514;
+            justify-self: center;
+            user-select: none;
+        }
+
+        .room-content {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            user-select: none;
+            color: #611514;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .room-content strong {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .room-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        /* Color variants for cards */
+        .room-card.card-dark {
+            background-color: #611514;
+            color: white;
+            box-shadow: none;
+        }
+
+        .room-card.card-dark .room-number {
+            color: white;
+        }
+
+        .room-card.card-dark .room-content {
+            color: white;
+        }
+
+        .room-card.card-light {
+            background-color: #eee;
+        }
+
+        .room-card.card-light .room-number {
+            color: #611514;
+            font-weight: 700;
+        }
+
+        .room-card.card-light .room-content {
+            color: #611514;
+        }
+
+        .room-card.booked-today {
+            border-left: 5px solid #dc3545;
+        }
+        /* Grid container for room cards - NEW SPLIT LAYOUT */
+        .rooms-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .rooms-column {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .column-title {
+            text-align: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: #611514;
+            margin-bottom: 24px;
+            padding: 12px 0;
+            border-bottom: 3px solid #611514;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .room-card-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+                /* Hero Section */
+        .hero-section {
+            background: #611514;
+            color: white;
+            padding: 4rem 0;
+        }
+        
+        .stats-card {
+            background: #8c1a1a;
+            border: none;
+            border-radius: 12px;
+            color: white;
+        }
+</style>
+<body>
+
+    <!-- Hero Section -->
+    <section class="hero-section text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold mb-3">
+                <i class="fas fa-door-open me-3"></i>Selamat Datang di Room Booking
+            </h1>
+            <p class="lead mb-4">Booking ruangan dengan mudah dan cepat. Pilih ruangan sesuai kebutuhan Anda!</p>
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="stats-card card p-4 mb-4">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h3 class="fw-bold mb-1">{{ rooms|length }}</h3>
+                                <small>Ruangan Tersedia</small>
+                            </div>
+                            <div class="col-6">
+                                <h3 class="fw-bold mb-1">24/7</h3>
+                                <small>Layanan Booking</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="mb-0">
+                <a href="/login" class="btn btn-light btn-lg fw-semibold me-3">
+                    <i class="fas fa-calendar-plus me-2"></i>Mulai Booking
+                </a>
+                <a href="/register" class="btn btn-outline-light btn-lg fw-semibold">
+                    <i class="fas fa-user-plus me-2"></i>Daftar Sekarang
+                </a>
+            </p>
+        </div>
+    </section>
+
+    <!-- Rooms Section -->
+    <main>
+        <section aria-label="Daftar ruangan tersedia">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold mb-3" style="color: #611514;">
+                    <i class="fas fa-th-large me-2"></i>Daftar Ruangan
+                </h2>
+                <p class="text-muted">Pilih ruangan yang sesuai dengan kebutuhan acara atau meeting Anda</p>
+            </div>
+
+            {% if rooms %}
+                <div class="rooms-container" role="list">
+                    <!-- Left Column: Rooms 1-9 -->
+                    <div class="rooms-column">
+                        <div class="column-title">
+                            <i></i>
+                        </div>
+                        {% for room in rooms[:9] %}
+                            {% set card_class = 'card-light' if room.is_booked_today else 'card-dark' %}
+                            <div class="room-card {{ card_class }} {% if room.is_booked_today %}booked-today{% endif %}" tabindex="0" role="listitem">
+                                <div class="room-number">{{ loop.index }}</div>
+                                <div class="room-content">
+                                    <strong>{{ room.name }}</strong>
+                                                                    
+                                    {% if room.is_booked_today %}
+                                        <div class="booking-status {% if room.booking_status == 'APPROVED' %}status-approved{% else %}status-pending{% endif %}">
+                                            {% if room.booking_status == 'APPROVED' %}
+                                                <i class="fas fa-check me-1"></i>Terbooked
+                                            {% else %}
+                                                <i class="fas fa-hourglass-half me-1"></i>Used
+                                            {% endif %}
+                                        </div>
+                                        {% if room.today_booking_time %}
+                                            <div class="booking-time">{{ room.today_booking_time }}</div>
+                                        {% endif %}
+                                        {% if room.booker_name and room.booker_prodi %}
+                                            <div class="booker-info">{{ room.booker_name }} - {{ room.booker_prodi }}</div>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="room-actions">
+                                    {% if not room.is_booked_today %}
+                                        <button class="btn btn-book-now" onclick="redirectToLogin()">
+                                            <i class="fas fa-calendar-check me-1"></i>Book
+                                        </button>
+                                    {% endif %}
+                                    <button class="btn btn-schedule" onclick="showRoomSchedule({{ room.id }}, '{{ room.name }}')">
+                                        <i class="fas fa-calendar-alt me-1"></i>Jadwal
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Right Column: Rooms 10-18 -->
+                    <div class="rooms-column">
+                        <div class="column-title">
+                            <i></i>
+                        </div>
+                        {% for room in rooms[9:] %}
+                            {% set card_class = 'card-light' if room.is_booked_today else 'card-dark' %}
+                            <div class="room-card {{ card_class }} {% if room.is_booked_today %}booked-today{% endif %}" tabindex="0" role="listitem">
+                                <div class="room-number">{{ loop.index + 9 }}</div>
+                                <div class="room-content">
+                                    <strong>{{ room.name }}</strong>
+                                                                    
+                                    {% if room.is_booked_today %}
+                                        <div class="booking-status {% if room.booking_status == 'APPROVED' %}status-approved{% else %}status-pending{% endif %}">
+                                            {% if room.booking_status == 'APPROVED' %}
+                                                <i class="fas fa-check me-1"></i>Terbooked
+                                            {% else %}
+                                                <i class="fas fa-hourglass-half me-1"></i>Used
+                                            {% endif %}
+                                        </div>
+                                        {% if room.today_booking_time %}
+                                            <div class="booking-time">{{ room.today_booking_time }}</div>
+                                        {% endif %}
+                                        {% if room.booker_name and room.booker_prodi %}
+                                            <div class="booker-info">{{ room.booker_name }} - {{ room.booker_prodi }}</div>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="room-actions">
+                                    {% if not room.is_booked_today %}
+                                        <button class="btn btn-book-now" onclick="redirectToLogin()">
+                                            <i class="fas fa-calendar-check me-1"></i>Book
+                                        </button>
+                                    {% endif %}
+                                    <button class="btn btn-schedule" onclick="showRoomSchedule({{ room.id }}, '{{ room.name }}')">
+                                        <i class="fas fa-calendar-alt me-1"></i>Jadwal
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="mb-4">
+                        <i class="fas fa-door-closed fa-5x opacity-25"></i>
+                    </div>
+                    <h4 class="fw-semibold mb-3">Belum Ada Ruangan Tersedia</h4>
+                    <p class="mb-4">Saat ini belum ada ruangan yang tersedia untuk dibooking. Silakan cek kembali nanti.</p>
+                    <a href="/register" class="btn btn-primary btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Daftar untuk Update
+                    </a>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <!-- Schedule Modal -->
+    <div class="modal fade schedule-modal" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="schedule-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="modal-title mb-1" id="scheduleModalLabel">
+                                <i class="fas fa-calendar-alt me-2"></i>Jadwal Ruangan
+                            </h5>
+                            <small class="opacity-75" id="roomName">Loading...</small>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="loading-spinner text-center py-4">
+                        <div class="spinner-border" style="color: #611514;" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Memuat jadwal...</p>
+                    </div>
+                    <div class="schedule-grid" id="scheduleGrid">
+                        <!-- Schedule will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <div class="text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Login untuk melakukan Booking
+                        </div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-4">
+        <div class="container">
+            <p class="mb-2">
+                <i class="fas fa-building me-2"></i>
+                <strong>Room Booking System</strong>
+            </p>
+            <p class="mb-0 opacity-75">
+                <small>&copy; 2024 Room Booking. Solusi booking ruangan terpercaya.</small>
+            </p>
+        </div>
+    </footer>
+
+    
+    <script>
+        // Function to redirect to login
+        function redirectToLogin() {
+            window.location.href = '/login';
+        }
+
+        // Function to show room schedule
+        async function showRoomSchedule(roomId, roomName) {
+            // Show modal and loading state
+            const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+            document.getElementById('roomName').textContent = roomName;
+            document.querySelector('.loading-spinner').style.display = 'block';
+            document.getElementById('scheduleGrid').innerHTML = '';
+            modal.show();
+            
+            try {
+                // Fetch schedule data
+                const response = await fetch(`/room_schedule/${roomId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                
+                // Hide loading spinner
+                document.querySelector('.loading-spinner').style.display = 'none';
+                
+                // Generate schedule HTML
+                let scheduleHTML = '';
+                if (data.schedule && data.schedule.length > 0) {
+                    data.schedule.forEach(day => {
+                        let cardClass = 'date-card';
+                        let statusIcon = '';
+                        let statusText = '';
+                        
+                        if (day.is_past) {
+                            cardClass += ' past';
+                            statusIcon = '<i class="fas fa-history me-2"></i>';
+                            statusText = 'Telah Berlalu';
+                        } else if (day.is_today) {
+                            cardClass += ' today';
+                            statusIcon = '<i class="fas fa-star me-2"></i>';
+                            statusText = 'Hari Ini';
+                        } else if (day.is_booked) {
+                            cardClass += ' booked';
+                            statusIcon = '<i class="fas fa-times-circle me-2"></i>';
+                            statusText = `${day.booking_count} Booking`;
+                        } else {
+                            cardClass += ' available';
+                            statusIcon = '<i class="fas fa-check-circle me-2"></i>';
+                            statusText = 'Tersedia';
+                        }
+                        
+                        let bookingDetails = '';
+                        if (day.bookings && day.bookings.length > 0) {
+                            bookingDetails = '<div class="mt-2">';
+                            day.bookings.forEach(booking => {
+                                bookingDetails += `
+                                    <div class="booking-time-modal">
+                                        <i class="fas fa-clock me-1"></i>
+                                        ${booking.start_time} - ${booking.end_time}
+                                        <br><small>${booking.purpose || 'Meeting'}</small>
+                                    </div>
+                                `;
+                            });
+                            bookingDetails += '</div>';
+                        }
+                        
+                        scheduleHTML += `
+                            <div class="${cardClass}" onclick="selectDate('${day.date}', ${day.is_booked}, ${day.is_past})">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">${day.day_name}</h6>
+                                        <p class="mb-0">${day.date_formatted}</p>
+                                    </div>
+                                    <div class="text-end">
+                                        <small>${statusIcon}${statusText}</small>
+                                    </div>
+                                </div>
+                                ${bookingDetails}
+                            </div>
+                        `;
+                    });
+                } else {
+                    scheduleHTML = `
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                            <p>Tidak ada jadwal tersedia</p>
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('scheduleGrid').innerHTML = scheduleHTML;
+                
+            } catch (error) {
+                console.error('Error fetching schedule:', error);
+                document.querySelector('.loading-spinner').style.display = 'none';
+                document.getElementById('scheduleGrid').innerHTML = `
+                    <div class="text-center text-danger py-4">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                        <p>Gagal memuat jadwal. Silakan coba lagi.</p>
+                        <button class="btn btn-outline-danger btn-sm mt-2" onclick="showRoomSchedule(${roomId}, '${roomName}')">
+                            <i class="fas fa-redo me-1"></i>Coba Lagi
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Function to handle date selection
+        function selectDate(date, isBooked, isPast) {
+            // If available, redirect to booking page with selected date
+            if (!isPast && !isBooked) {
+                window.location.href = `/login?redirect=/booking?date=${date}`;
+            } else {
+                window.location.href = `/login`;
+            }
+        }
+        
+        // Auto refresh page every 5 minutes to update booking status
+        setInterval(() => {
+            // Only reload if the page is visible to avoid unnecessary requests
+            if (!document.hidden) {
+                location.reload();
+            }
+        }, 300000); // 5 minutes
+
+        // Handle visibility change to refresh when page becomes visible
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                // Page is now visible, you might want to refresh data
+                // This is optional and can be removed if not needed
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+{% endblock %}

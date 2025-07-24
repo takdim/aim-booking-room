@@ -276,7 +276,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">
+            <a class="navbar-brand" href="/member/member/dashboard">
                 <i class="fas fa-building"></i> Room Booking
             </a>
             
@@ -287,17 +287,17 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/member/dashboard">
+                        <a class="nav-link" href="/member/member/dashboard">
                             <i class="fas fa-tachometer-alt"></i> Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/member/bookings">
+                        <a class="nav-link" href="/member/member/bookings">
                             <i class="fas fa-calendar-alt"></i> My Bookings
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/member/profile">
+                        <a class="nav-link" href="/member/member/profile">
                             <i class="fas fa-user"></i> Profile
                         </a>
                     </li>
@@ -466,7 +466,9 @@
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         
         let selectedDates = [];
-        const maxSelections = 7;
+        let firstSelectedDate = null;
+        let secondSelectedDate = null;
+        const maxSelections = 14;
         
         // Generate date cards
         function generateDateCards() {
@@ -486,7 +488,7 @@
                 dateCard.dataset.date = dateString;
                 
                 if (!isBooked) {
-                    dateCard.addEventListener('click', () => toggleDateSelection(dateString, dateCard));
+                    dateCard.addEventListener('click', () => handleDateSelection(dateString, dateCard));
                 }
                 
                 dateCard.innerHTML = `
@@ -501,22 +503,43 @@
         }
         
         // Toggle date selection
-        function toggleDateSelection(dateString, dateCard) {
+        function handleDateSelection(dateString, dateCard) {
             if (dateCard.classList.contains('booked')) return;
             
+            // If clicking on already selected date, clear all selections
             if (selectedDates.includes(dateString)) {
-                // Remove selection
-                selectedDates = selectedDates.filter(date => date !== dateString);
-                dateCard.classList.remove('selected');
-            } else {
-                // Add selection (if under limit)
-                if (selectedDates.length < maxSelections) {
-                    selectedDates.push(dateString);
-                    dateCard.classList.add('selected');
-                } else {
-                    alert(`Maksimal ${maxSelections} hari yang dapat dipilih!`);
+                clearAllSelections();
+                return;
+            }
+            
+            // If no dates selected yet, select the first date
+            if (selectedDates.length === 0) {
+                firstSelectedDate = dateString;
+                selectedDates = [dateString];
+                updateVisualSelection();
+            } 
+            // If one date is selected, create range to second date
+            else if (selectedDates.length >= 1) {
+                secondSelectedDate = dateString;
+                
+                // Create date range between first and second date
+                const range = getDateRange(firstSelectedDate, secondSelectedDate);
+                
+                // Check if range exceeds maximum allowed selections
+                if (range.length > maxSelections) {
+                    alert(`Rentang tanggal terlalu panjang! Maksimal ${maxSelections} hari yang dapat dipilih.`);
                     return;
                 }
+                
+                // Check if any date in range is booked
+                const hasBookedDate = range.some(date => bookedDates.includes(date));
+                if (hasBookedDate) {
+                    alert('Rentang tanggal mengandung hari yang sudah dibooking. Pilih rentang lain.');
+                    return;
+                }
+                
+                selectedDates = range;
+                updateVisualSelection();
             }
             
             updateSelectedCount();
@@ -524,7 +547,6 @@
             updateHiddenInput();
             updateBookingSummary();
         }
-        
         // Update selected count display
         function updateSelectedCount() {
             document.getElementById('selectedCount').textContent = selectedDates.length;
@@ -566,7 +588,107 @@
                 summaryDiv.style.display = 'none';
             }
         }
+
+        // Get date range between two dates
+        function getDateRange(startDateStr, endDateStr) {
+            const start = new Date(startDateStr);
+            const end = new Date(endDateStr);
+            
+            // Ensure start is before end
+            const actualStart = start <= end ? start : end;
+            const actualEnd = start <= end ? end : start;
+            
+            const dates = [];
+            const currentDate = new Date(actualStart);
+            
+            while (currentDate <= actualEnd) {
+                dates.push(currentDate.toISOString().split('T')[0]);
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            return dates;
+        }
         
+        // Clear all selections
+        function clearAllSelections() {
+            selectedDates = [];
+            firstSelectedDate = null;
+            secondSelectedDate = null;
+            updateVisualSelection();
+            updateSelectedCount();
+            updateSubmitButton();
+            updateHiddenInput();
+            updateBookingSummary();
+        }
+
+        // Update visual selection on date cards
+        function updateVisualSelection() {
+            // Clear all previous selections
+            document.querySelectorAll('.date-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selected class to all selected dates
+            selectedDates.forEach(dateString => {
+                const dateCard = document.querySelector(`[data-date="${dateString}"]`);
+                if (dateCard && !dateCard.classList.contains('booked')) {
+                    dateCard.classList.add('selected');
+                }
+            });
+        }
+
+        // Update selected count display
+        function updateSelectedCount() {
+            document.getElementById('selectedCount').textContent = selectedDates.length;
+        }
+
+        // Update submit button state
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = selectedDates.length === 0;
+        }
+
+        // Update hidden input with selected dates
+        function updateHiddenInput() {
+            document.getElementById('selectedDates').value = selectedDates.sort().join(',');
+        }
+
+        // Update booking summary
+        function updateBookingSummary() {
+            const summaryDiv = document.getElementById('bookingSummary');
+            const datesList = document.getElementById('selectedDatesList');
+            
+            if (selectedDates.length > 0) {
+                summaryDiv.style.display = 'block';
+                datesList.innerHTML = '';
+                
+                // Sort dates and display them
+                const sortedDates = selectedDates.sort();
+                sortedDates.forEach(dateString => {
+                    const date = new Date(dateString);
+                    const dateItem = document.createElement('div');
+                    dateItem.className = 'selected-date-item';
+                    dateItem.innerHTML = `
+                        <strong>${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}</strong>
+                        <small class="d-block">${dateNames[date.getDay()]}, 08:30 - 15:40</small>
+                    `;
+                    datesList.appendChild(dateItem);
+                });
+                
+                // Add range info if more than one date selected
+                if (selectedDates.length > 1) {
+                    const rangeInfo = document.createElement('div');
+                    rangeInfo.className = 'alert alert-info mt-2 small';
+                    rangeInfo.innerHTML = `
+                        <i class="fas fa-info-circle me-1"></i>
+                        Rentang: ${selectedDates.length} hari berturut-turut
+                    `;
+                    datesList.appendChild(rangeInfo);
+                }
+            } else {
+                summaryDiv.style.display = 'none';
+            }
+        }
         // Form validation before submit
         document.getElementById('bookingForm').addEventListener('submit', function(e) {
             if (selectedDates.length === 0) {
@@ -583,17 +705,23 @@
             }
             
             // Confirm booking
-            const confirmMessage = `Konfirmasi booking untuk ${selectedDates.length} hari?\n\nTanggal: ${selectedDates.sort().join(', ')}\nWaktu: 08:30 - 15:40\nKeperluan: ${purpose}`;
+            const sortedDates = selectedDates.sort();
+            const rangeText = selectedDates.length > 1 ? 
+                `${sortedDates[0]} sampai ${sortedDates[sortedDates.length - 1]} (${selectedDates.length} hari)` : 
+                sortedDates[0];
+            
+            const confirmMessage = `Konfirmasi booking untuk ${selectedDates.length} hari?\n\nTanggal: ${rangeText}\nWaktu: 08:30 - 15:40\nKeperluan: ${purpose}`;
             if (!confirm(confirmMessage)) {
                 e.preventDefault();
                 return;
             }
         });
-        
+
         // Initialize
         generateDateCards();
         updateSelectedCount();
         updateSubmitButton();
+
     </script>
 </body>
 </html>

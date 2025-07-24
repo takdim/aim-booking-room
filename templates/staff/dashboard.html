@@ -438,7 +438,7 @@
                 actionButtons.innerHTML = '<span class="text-muted"><i class="fas fa-spinner fa-spin"></i> Memproses...</span>';
                 
                 // AJAX request to approve booking
-                fetch(`/staff/approve-booking/${bookingId}`, {
+                fetch(`approve-booking/${bookingId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Checkin/Checkout - Room Booking System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">
+                        <i class="fas fa-clock text-primary me-2"></i>
+                        Checkin & Checkout Management
+                    </h2>
+                    <a href="/staff/dashboard" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        Kembali ke Dashboard
+                    </a>
+                </div>
+
+                <!-- Alert for messages -->
+                <div id="alertContainer" class="mb-3"></div>
+
+                <!-- Stats Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h5 class="card-title mb-0">Menunggu Checkin</h5>
+                                        <h3 class="mb-0" id="checkin-count">{{ checkin_bookings|length }}</h3>
+                                    </div>
+                                    <div class="ms-3">
+                                        <i class="fas fa-sign-in-alt fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h5 class="card-title mb-0">Sedang Berlangsung</h5>
+                                        <h3 class="mb-0" id="active-count">{{ active_bookings|length }}</h3>
+                                    </div>
+                                    <div class="ms-3">
+                                        <i class="fas fa-play-circle fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- All Bookings Table -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list text-primary me-2"></i>
+                            Daftar Booking
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col">No</th>
+                                        <th scope="col">Nama Pengguna</th>
+                                        <th scope="col">Ruangan</th>
+                                        <th scope="col">Tanggal Booking</th>
+                                        <th scope="col">Waktu</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Booking yang menunggu checkin -->
+                                    {% for booking in checkin_bookings %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-info rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                     style="width: 32px; height: 32px; font-size: 12px; color: white;">
+                                                    {{ booking.username[0].upper() }}
+                                                </div>
+                                                <div>
+                                                    <div class="fw-semibold">{{ booking.username }}</div>
+                                                    <small class="text-muted">{{ booking.email }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border">
+                                                <i class="fas fa-door-open me-1"></i>
+                                                {{ booking.room_name }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% for date in booking.Booking.get_booking_dates_list() %}
+                                                <span class="badge bg-secondary me-1">{{ date }}</span>
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ booking.Booking.start_time.strftime('%H:%M') }} - 
+                                                {{ booking.Booking.end_time.strftime('%H:%M') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Menunggu Checkin
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-success btn-sm" 
+                                                    onclick="checkinBooking({{ booking.Booking.id }})">
+                                                <i class="fas fa-sign-in-alt me-1"></i>
+                                                Checkin
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+
+                                    <!-- Booking yang sedang berlangsung -->
+                                    {% for booking in active_bookings %}
+                                    <tr class="table-success">
+                                        <td>{{ loop.index + checkin_bookings|length }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                     style="width: 32px; height: 32px; font-size: 12px; color: white;">
+                                                    {{ booking.username[0].upper() }}
+                                                </div>
+                                                <div>
+                                                    <div class="fw-semibold">{{ booking.username }}</div>
+                                                    <small class="text-muted">{{ booking.email }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border">
+                                                <i class="fas fa-door-open me-1"></i>
+                                                {{ booking.room_name }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% for date in booking.Booking.get_booking_dates_list() %}
+                                                <span class="badge bg-secondary me-1">{{ date }}</span>
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ booking.Booking.start_time.strftime('%H:%M') }} - 
+                                                {{ booking.Booking.end_time.strftime('%H:%M') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-play-circle me-1"></i>
+                                                Sedang Berlangsung
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" 
+                                                    onclick="checkoutBooking({{ booking.Booking.id }})">
+                                                <i class="fas fa-sign-out-alt me-1"></i>
+                                                Checkout
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+
+                                    {% if not checkin_bookings and not active_bookings %}
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4 text-muted">
+                                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                            Tidak ada booking yang perlu dikelola saat ini
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showAlert(message, type = 'success') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            alertContainer.innerHTML = alertHtml;
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                const alert = alertContainer.querySelector('.alert');
+                if (alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            }, 5000);
+        }
+
+        function checkinBooking(bookingId) {
+            if (!confirm('Apakah Anda yakin ingin melakukan checkin untuk booking ini?')) {
+                return;
+            }
+
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+
+            fetch(`/staff/checkin-booking/${bookingId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showAlert(data.message, 'danger');
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Terjadi kesalahan sistem', 'danger');
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+        }
+
+        function checkoutBooking(bookingId) {
+            if (!confirm('Apakah Anda yakin ingin melakukan checkout untuk booking ini?')) {
+                return;
+            }
+
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+
+            fetch(`/staff/checkout-booking/${bookingId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showAlert(data.message, 'danger');
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Terjadi kesalahan sistem', 'danger');
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+        }
+    </script>
+</body>
+</html>
