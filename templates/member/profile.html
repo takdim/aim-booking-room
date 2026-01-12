@@ -1,248 +1,346 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - Room Booking System</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('member_dashboard') }}">
-                <i class="fas fa-calendar-alt me-2"></i>Room Booking
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ url_for('member_dashboard') }}">
-                    <i class="fas fa-tachometer-alt me-1"></i>Dashboard
-                </a>
-                <a class="nav-link" href="{{ url_for('member_bookings') }}">
-                    <i class="fas fa-calendar-check me-1"></i>My Bookings
-                </a>
-                <a class="nav-link active" href="{{ url_for('member_profile') }}">
-                    <i class="fas fa-user me-1"></i>Profile
-                </a>
-                <a class="nav-link" href="{{ url_for('logout') }}">
-                    <i class="fas fa-sign-out-alt me-1"></i>Logout
-                </a>
-            </div>
+{% extends "/member/template.html" %}
+
+{% block content %}
+<style>
+  .hero-section {
+    background: #611514;
+    padding: 36px 0 32px;
+  }
+
+  .hero-shell {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 18px;
+    padding: 22px 0;
+  }
+
+  .hero-title {
+    font-size: clamp(1.6rem, 2.2vw + 1rem, 2.4rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .hero-subtitle {
+    opacity: 0.85;
+  }
+
+  .glass-card {
+    background: #f7efef;
+    border: 1px solid rgba(97, 21, 20, 0.12);
+    border-radius: 18px;
+  }
+
+  .solid-card {
+    background: #fff;
+    border: 1px solid rgba(97, 21, 20, 0.1);
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(31, 10, 10, 0.12);
+  }
+
+  .section-title {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .form-control,
+  .form-select {
+    border-radius: 12px;
+    border: 2px solid rgba(97, 21, 20, 0.15);
+    padding: 12px 14px;
+    transition: all 0.2s ease;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #8c1a1a;
+    box-shadow: 0 0 0 0.2rem rgba(140, 26, 26, 0.15);
+  }
+
+  .btn-maroon {
+    background: #8c1a1a;
+    color: #fff;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .btn-maroon:hover {
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(31, 10, 10, 0.2);
+  }
+
+  .btn-outline-maroon {
+    border: 2px solid #8c1a1a;
+    color: #8c1a1a;
+    border-radius: 999px;
+    padding: 10px 22px;
+    font-weight: 600;
+  }
+
+  .btn-outline-maroon:hover {
+    background: #8c1a1a;
+    color: #fff;
+  }
+
+  .alert {
+    border-radius: 14px;
+    border: none;
+  }
+
+  .info-label {
+    color: #6a4a4a;
+    font-weight: 600;
+  }
+
+  .info-value {
+    color: #2d1c1c;
+    font-weight: 600;
+  }
+
+  .ktm-card {
+    border: 1px solid rgba(97, 21, 20, 0.12);
+    border-radius: 14px;
+  }
+
+  .ktm-card .card-header {
+    background: #f7efef;
+    border-bottom: 1px solid rgba(97, 21, 20, 0.12);
+    color: #611514;
+    font-weight: 600;
+  }
+
+  .ktm-filename {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ktm-info {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .ktm-actions {
+    flex-shrink: 0;
+  }
+
+  .ktm-actions .btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-content {
+    border-radius: 16px;
+    border: 1px solid rgba(97, 21, 20, 0.12);
+  }
+</style>
+
+<div class="hero-section">
+  <div class="container hero-shell text-center text-light">
+    <h1 class="hero-title mb-1">
+      <i class="fas fa-user me-2"></i>
+      Profil Saya
+    </h1>
+    <p class="hero-subtitle mb-0">Lengkapi data untuk memudahkan proses booking.</p>
+  </div>
+</div>
+
+<div class="container py-4">
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="glass-card p-4 h-100">
+        <h5 class="section-title mb-3">
+          <i class="fas fa-id-badge me-2"></i>Informasi Akun
+        </h5>
+        <div class="mb-3">
+          <div class="info-label">Username</div>
+          <div class="info-value">{{ user.username }}</div>
         </div>
-    </nav>
-
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-8 mx-auto">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">
-                            <i class="fas fa-user me-2"></i>Profile Saya
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <!-- Alert Messages -->
-                        {% if error %}
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                        {% endif %}
-
-                        {% if success %}
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle me-2"></i>{{ success }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                        {% endif %}
-
-                        <!-- Flash Messages -->
-                        {% with messages = get_flashed_messages(with_categories=true) %}
-                            {% if messages %}
-                                {% for category, message in messages %}
-                                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
-                                    <i class="fas fa-{{ 'exclamation-circle' if category == 'error' else 'check-circle' }} me-2"></i>{{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                                {% endfor %}
-                            {% endif %}
-                        {% endwith %}
-
-                        <!-- Profile Info -->
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <h6 class="text-muted">Informasi Akun</h6>
-                                <p><strong>Username:</strong> {{ user.username }}</p>
-                                <p><strong>Email:</strong> {{ user.email }}</p>
-                                <p><strong>Bergabung:</strong> {{ user.created_at.strftime('%d %B %Y') }}</p>
-                            </div>
-                        </div>
-
-                        <hr>
-
-                        <!-- Profile Form -->
-                        <form method="POST" enctype="multipart/form-data">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="full_name" class="form-label">
-                                            <i class="fas fa-user me-1"></i>Nama Lengkap *
-                                        </label>
-                                        <input type="text" 
-                                               class="form-control" 
-                                               id="full_name" 
-                                               name="full_name" 
-                                               value="{{ profile.full_name if profile else '' }}"
-                                               placeholder="Masukkan nama lengkap"
-                                               maxlength="100"
-                                               required>
-                                    </div>
-                                </div>
-                                
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="prodi" class="form-label">
-                                            <i class="fas fa-graduation-cap me-1"></i>Program Studi *
-                                        </label>
-                                        <select class="form-select" id="prodi" name="prodi" required>
-                                            <option value="">Pilih Program Studi</option>
-                                            {% for option in prodi_options %}
-                                            <option value="{{ option }}" 
-                                                    {% if profile and profile.prodi == option %}selected{% endif %}>
-                                                {{ option }}
-                                            </option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-12">
-                                    <div class="mb-3">
-                                        <label for="ktm_file" class="form-label">
-                                            <i class="fas fa-file-pdf me-1"></i>Kartu Tanda Mahasiswa (KTM)
-                                        </label>
-                                        
-                                        {% if profile and profile.ktm_filename %}
-                                        <!-- File KTM Sudah Ada - Tampilan Permanen -->
-                                        <div class="card border-success mb-3">
-                                            <div class="card-header bg-light-success text-success">
-                                                <i class="fas fa-check-circle me-2"></i>
-                                                <strong>File KTM Tersedia</strong>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <div>
-                                                        <h6 class="mb-1">
-                                                            <i class="fas fa-file-pdf text-danger me-2"></i>
-                                                            {{ profile.ktm_filename }}
-                                                        </h6>
-                                                        <small class="text-muted">
-                                                            File KTM telah diupload dan tersimpan
-                                                        </small>
-                                                    </div>
-                                                    <div class="btn-group" role="group">
-                                                        <a href="{{ url_for('member_download_ktm') }}" 
-                                                           class="btn btn-outline-primary btn-sm">
-                                                            <i class="fas fa-download me-1"></i>Download
-                                                        </a>
-                                                        <button type="button" 
-                                                                class="btn btn-outline-danger btn-sm"
-                                                                onclick="confirmDeleteKTM()">
-                                                            <i class="fas fa-trash me-1"></i>Hapus
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {% endif %}
-                                        
-                                        <input type="file" 
-                                               class="form-control" 
-                                               id="ktm_file" 
-                                               name="ktm_file"
-                                               accept=".pdf"
-                                               {% if not profile or not profile.ktm_filename %}{% endif %}>
-                                        <div class="form-text">
-                                            Format file: PDF | Maksimal ukuran: 16MB
-                                            {% if profile and profile.ktm_filename %}
-                                            <br><small class="text-muted">Pilih file baru jika ingin mengganti file KTM yang ada</small>
-                                            {% else %}
-                                            <br><small class="text-muted">Upload file KTM dalam format PDF</small>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary me-md-2">
-                                    <i class="fas fa-arrow-left me-1"></i>Kembali
-                                </a>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save me-1"></i>
-                                    {% if profile %}Update Profile{% else %}Simpan Profile{% endif %}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
+        <div class="mb-3">
+          <div class="info-label">Email</div>
+          <div class="info-value">{{ user.email }}</div>
         </div>
+        <div>
+          <div class="info-label">Bergabung</div>
+          <div class="info-value">{{ user.created_at.strftime('%d %B %Y') }}</div>
+        </div>
+      </div>
     </div>
 
-    <!-- Modal Konfirmasi Hapus KTM -->
-    <div class="modal fade" id="deleteKTMModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Konfirmasi Hapus File KTM</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="col-lg-8">
+      <div class="solid-card">
+        <div class="border-bottom px-4 py-3">
+          <h5 class="section-title mb-0">
+            <i class="fas fa-user-edit me-2"></i>Lengkapi Profil
+          </h5>
+        </div>
+        <div class="p-4">
+          {% if error %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endif %}
+
+          {% if success %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              <i class="fas fa-check-circle me-2"></i>{{ success }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endif %}
+
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                  <i class="fas fa-{{ 'exclamation-circle' if category == 'error' else 'check-circle' }} me-2"></i>{{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
-                <div class="modal-body">
-                    <p>Apakah Anda yakin ingin menghapus file KTM? Tindakan ini tidak dapat dibatalkan.</p>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+
+          <form method="POST" enctype="multipart/form-data">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="full_name" class="form-label">
+                    <i class="fas fa-user me-1"></i>Nama Lengkap *
+                  </label>
+                  <input type="text"
+                         class="form-control"
+                         id="full_name"
+                         name="full_name"
+                         value="{{ profile.full_name if profile else '' }}"
+                         placeholder="Masukkan nama lengkap"
+                         maxlength="100"
+                         required>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <form method="POST" action="{{ url_for('member_delete_ktm') }}" style="display: inline;">
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-trash me-1"></i>Hapus
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="prodi" class="form-label">
+                    <i class="fas fa-graduation-cap me-1"></i>Program Studi *
+                  </label>
+                  <select class="form-select" id="prodi" name="prodi" required>
+                    <option value="">Pilih Program Studi</option>
+                    {% for option in prodi_options %}
+                      <option value="{{ option }}" {% if profile and profile.prodi == option %}selected{% endif %}>
+                        {{ option }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="ktm_file" class="form-label">
+                <i class="fas fa-file-pdf me-1"></i>Kartu Tanda Mahasiswa (KTM)
+              </label>
+
+              {% if profile and profile.ktm_filename %}
+                <div class="card ktm-card mb-3">
+                  <div class="card-header">
+                    <i class="fas fa-check-circle me-2"></i>
+                    File KTM Tersedia
+                  </div>
+                  <div class="card-body">
+                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+                      <div class="ktm-info">
+                        <h6 class="mb-1 ktm-filename">
+                          <i class="fas fa-file-pdf text-danger me-2"></i>
+                          {{ profile.ktm_filename }}
+                        </h6>
+                        <small class="text-muted">File KTM telah diupload dan tersimpan</small>
+                      </div>
+                      <div class="btn-group ktm-actions" role="group">
+                        <a href="{{ url_for('member.member_download_ktm') }}" class="btn btn-outline-maroon btn-sm" aria-label="Download KTM" title="Download">
+                          <i class="fas fa-download"></i>
+                        </a>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDeleteKTM()" aria-label="Hapus KTM" title="Hapus">
+                          <i class="fas fa-trash"></i>
                         </button>
-                    </form>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              {% endif %}
+
+              <input type="file"
+                     class="form-control"
+                     id="ktm_file"
+                     name="ktm_file"
+                     accept=".pdf">
+              <div class="form-text">
+                Format file: PDF | Maksimal ukuran: 16MB
+                {% if profile and profile.ktm_filename %}
+                  <br><small class="text-muted">Pilih file baru jika ingin mengganti file KTM yang ada</small>
+                {% else %}
+                  <br><small class="text-muted">Upload file KTM dalam format PDF</small>
+                {% endif %}
+              </div>
             </div>
+
+            <div class="d-flex flex-column flex-sm-row justify-content-end gap-2">
+              <a href="{{ url_for('member.member_dashboard') }}" class="btn btn-outline-maroon">
+                <i class="fas fa-arrow-left me-1"></i>Kembali
+              </a>
+              <button type="submit" class="btn btn-maroon">
+                <i class="fas fa-save me-1"></i>
+                {% if profile %}Update Profile{% else %}Simpan Profile{% endif %}
+              </button>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
+  </div>
+</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function confirmDeleteKTM() {
-            var modal = new bootstrap.Modal(document.getElementById('deleteKTMModal'));
-            modal.show();
-        }
+<div class="modal fade" id="deleteKTMModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Konfirmasi Hapus File KTM</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Apakah Anda yakin ingin menghapus file KTM? Tindakan ini tidak dapat dibatalkan.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-maroon" data-bs-dismiss="modal">Batal</button>
+        <form method="POST" action="{{ url_for('member.member_delete_ktm') }}" style="display: inline;">
+          <button type="submit" class="btn btn-maroon">
+            <i class="fas fa-trash me-1"></i>Hapus
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
-        // Auto-hide alerts after 5 seconds (hanya untuk error/success messages)
-        setTimeout(function() {
-            var alerts = document.querySelectorAll('.alert:not(.alert-info)');
-            alerts.forEach(function(alert) {
-                var bootstrapAlert = new bootstrap.Alert(alert);
-                bootstrapAlert.close();
-            });
-        }, 5000);
-    </script>
+<script>
+  function confirmDeleteKTM() {
+    var modal = new bootstrap.Modal(document.getElementById('deleteKTMModal'));
+    modal.show();
+  }
 
-    <style>
-        .bg-light-success {
-            background-color: #d1e7dd !important;
-        }
-        
-        .border-success {
-            border-color: #198754 !important;
-        }
-        
-        .card-header.bg-light-success {
-            border-bottom: 1px solid #198754;
-        }
-    </style>
-</body>
-</html>
+  setTimeout(function() {
+    var alerts = document.querySelectorAll('.alert:not(.alert-info)');
+    alerts.forEach(function(alert) {
+      var bootstrapAlert = new bootstrap.Alert(alert);
+      bootstrapAlert.close();
+    });
+  }, 5000);
+</script>
+{% endblock %}

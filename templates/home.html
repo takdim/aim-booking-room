@@ -195,10 +195,9 @@
                 {% set card_class = 'bg-light' if room.is_booked_today else 'bg-maroon text-white' %}
                 <div class="card shadow-sm border-0 d-flex flex-row {{ card_class }} rounded-4 p-3 align-items-center {% if room.is_booked_today %}booked-today{% endif %}" tabindex="0" role="listitem">
                     <div class="me-3">
-                        <div class="fs-4 fw-bold {% if room.is_booked_today %}text-danger{% endif %}">{{ loop.index }}</div>
+                        <div class="fs-4 fw-bold {% if room.is_booked_today %}text-danger{% endif %}">{{ room.name }}</div>
                     </div>
                     <div class="flex-grow-1">
-                        <div class="fw-bold text-uppercase">{{ room.name }}</div>
                         
                         {% if room.is_booked_today %}
                             <div class="booking-status {% if room.booking_status == 'APPROVED' %}status-approved{% else %}status-pending{% endif %}">
@@ -236,10 +235,9 @@
                 {% set card_class = 'bg-light' if room.is_booked_today else 'bg-maroon text-white' %}
                 <div class="card shadow-sm border-0 d-flex flex-row {{ card_class }} rounded-4 p-3 align-items-center {% if room.is_booked_today %}booked-today{% endif %}" tabindex="0" role="listitem">
                     <div class="me-3">
-                        <div class="fs-4 fw-bold {% if room.is_booked_today %}text-danger{% endif %}">{{ loop.index + 6 }}</div>
+                        <div class="fs-4 fw-bold {% if room.is_booked_today %}text-danger{% endif %}">{{ room.name }}</div>
                     </div>
                     <div class="flex-grow-1">
-                        <div class="fw-bold text-uppercase">{{ room.name }}</div>
                         
                         {% if room.is_booked_today %}
                             <div class="booking-status {% if room.booking_status == 'APPROVED' %}status-approved{% else %}status-pending{% endif %}">

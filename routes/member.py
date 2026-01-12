@@ -29,10 +29,11 @@ def member_required(f):
     return decorated_function
 
 # Update pada route member_dashboard
-@member_bp.route('/member/dashboard')
+@member_bp.route('/dashboard')
 @member_required
 def member_dashboard():
     user = User.query.get(session['user_id'])
+    profile = UserProfile.query.filter_by(user_id=user.id).first()
     
     # Ambil statistik member
     total_bookings = Booking.query.filter_by(user_id=user.id).count()
@@ -55,13 +56,16 @@ def member_dashboard():
         'active_sanctions': active_sanctions
     }
     
+    profile_complete = bool(profile and profile.full_name and profile.prodi)
+
     return render_template("member/dashboard2.html", 
                          user=user,
                          rooms=rooms, 
                          member_stats=member_stats,
-                         recent_bookings=recent_bookings)
+                         recent_bookings=recent_bookings,
+                         profile_complete=profile_complete)
 
-@member_bp.route('/member/profile', methods=['GET', 'POST'])
+@member_bp.route('/profile', methods=['GET', 'POST'])
 @member_required
 def member_profile():
     user = User.query.get(session['user_id'])
@@ -153,7 +157,7 @@ def member_profile():
                          error=error, 
                          success=success)
 
-@member_bp.route('/member/profile/download-ktm')
+@member_bp.route('/profile/download-ktm')
 @member_required
 def member_download_ktm():
     user = User.query.get(session['user_id'])
@@ -161,17 +165,17 @@ def member_download_ktm():
     
     if not profile or not profile.ktm_filename:
         flash('File KTM tidak ditemukan.', 'error')
-        return redirect(url_for('member_profile'))
+        return redirect(url_for('member.member_profile'))
     
     file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], profile.ktm_filename)
     
     if not os.path.exists(file_path):
         flash('File KTM tidak ditemukan di server.', 'error')
-        return redirect(url_for('member_profile'))
+        return redirect(url_for('member.member_profile'))
     
     return send_file(file_path, as_attachment=True, download_name=f"KTM_{profile.full_name}.pdf")
 
-@member_bp.route('/member/profile/delete-ktm', methods=['POST'])
+@member_bp.route('/profile/delete-ktm', methods=['POST'])
 @member_required
 def member_delete_ktm():
     user = User.query.get(session['user_id'])
@@ -179,7 +183,7 @@ def member_delete_ktm():
     
     if not profile or not profile.ktm_filename:
         flash('File KTM tidak ditemukan.', 'error')
-        return redirect(url_for('member_profile'))
+        return redirect(url_for('member.member_profile'))
     
     # Hapus file dari server
     file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], profile.ktm_filename)
@@ -192,22 +196,28 @@ def member_delete_ktm():
     db.session.commit()
     
     flash('File KTM berhasil dihapus.', 'success')
-    return redirect(url_for('member_profile'))
+    return redirect(url_for('member.member_profile'))
 
 
 # Route yang dimodifikasi
-@member_bp.route('/member/book/<int:room_id>', methods=['GET', 'POST'])
+@member_bp.route('/book/<int:room_id>', methods=['GET', 'POST'])
 @member_required
 def member_book_room(room_id):
     room = Room.query.get_or_404(room_id)
     user = User.query.get(session['user_id'])
+    profile = UserProfile.query.filter_by(user_id=user.id).first()
     error = None
     success = None
     
+    # Wajib lengkapi profil sebelum booking
+    if not profile or not profile.full_name or not profile.prodi:
+        flash('Lengkapi profil terlebih dahulu sebelum melakukan booking.', 'error')
+        return redirect(url_for('member.member_profile'))
+
     # Cek apakah room aktif
     if not room.is_active:
         flash('Ruangan tidak tersedia untuk booking!', 'error')
-        return redirect(url_for('member_dashboard'))
+        return redirect(url_for('member.member_dashboard'))
     
     # Cek apakah user memiliki sanksi aktif
     active_sanctions = Sanction.query.filter_by(
@@ -217,7 +227,7 @@ def member_book_room(room_id):
     
     if active_sanctions > 0:
         flash('Anda tidak dapat melakukan booking karena memiliki sanksi aktif. Silakan selesaikan pembayaran sanksi terlebih dahulu.', 'error')
-        return redirect(url_for('member_dashboard'))
+        return redirect(url_for('member.member_dashboard'))
     
     # Cek apakah user sudah memiliki booking dengan status APPROVED yang belum COMPLETED
     active_booking = Booking.query.filter(
@@ -227,7 +237,7 @@ def member_book_room(room_id):
     
     if active_booking:
         flash('Anda tidak dapat melakukan booking karena masih memiliki booking yang disetujui dan belum selesai. Satu member hanya dapat memiliki 1 booking aktif.', 'error')
-        return redirect(url_for('member_dashboard'))
+        return redirect(url_for('member.member_dashboard'))
     
     if request.method == 'POST':
         selected_dates = request.form.get('selected_dates', '').strip()
@@ -368,7 +378,7 @@ def member_book_room(room_id):
 
 
 
-@member_bp.route('/member/bookings')
+@member_bp.route('/bookings')
 @member_required
 def member_bookings():
     user = User.query.get(session['user_id'])
@@ -402,7 +412,7 @@ def member_bookings():
                          stats=stats,
                          current_status=status_filter)
 
-@member_bp.route('/member/booking/cancel/<int:booking_id>', methods=['POST'])
+@member_bp.route('/booking/cancel/<int:booking_id>', methods=['POST'])
 @member_required
 def member_cancel_booking(booking_id):
     user = User.query.get(session['user_id'])
@@ -418,7 +428,7 @@ def member_cancel_booking(booking_id):
     
     return redirect(url_for('member.member_bookings'))
 
-@member_bp.route('/member/booking/detail/<int:booking_id>')
+@member_bp.route('/booking/detail/<int:booking_id>')
 @member_required
 def member_booking_detail(booking_id):
     user = User.query.get(session['user_id'])
@@ -488,7 +498,7 @@ def check_and_create_sanctions():
     
     return sanctions_created
 
-@member_bp.route('/member/sanctions')
+@member_bp.route('/sanctions')
 @member_required
 def member_sanctions():
     user = User.query.get(session['user_id'])
@@ -523,7 +533,7 @@ def member_sanctions():
                          stats=stats,
                          current_status=status_filter)
 
-@member_bp.route('/member/bookings/<int:booking_id>/checkout', methods=['POST'])
+@member_bp.route('/bookings/<int:booking_id>/checkout', methods=['POST'])
 @member_required
 def checkout_booking(booking_id):
     booking = Booking.query.get_or_404(booking_id)

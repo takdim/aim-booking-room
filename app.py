@@ -18,14 +18,27 @@ import re
 import os
 import json
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/room_booking'
-app.config['SECRET_KEY'] = 'Papua123'
+database_url = os.getenv('DATABASE_URL')
+secret_key = os.getenv('SECRET_KEY')
+if not database_url:
+    raise RuntimeError('DATABASE_URL belum diset. Gunakan env var DATABASE_URL.')
+if not secret_key:
+    raise RuntimeError('SECRET_KEY belum diset. Gunakan env var SECRET_KEY.')
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+app.config['SECRET_KEY'] = secret_key
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 app.config['UPLOAD_FOLDER'] = 'static/uploads/ktm'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -68,6 +81,26 @@ def init_data():
 
 # Daftarkan command CLI ke Flask
 app.cli.add_command(init_data)
+
+@click.command('init-rooms')
+@with_appcontext
+def init_rooms():
+    for i in range(1, 19):
+        room_name = f"{i}"
+        if not Room.query.filter_by(name=room_name).first():
+            room = Room(
+                name=room_name,
+                description=f"Ruangan {i} untuk keperluan umum",
+                capacity=1
+            )
+            db.session.add(room)
+            print(f"✅ {room_name} berhasil ditambahkan.")
+        else:
+            print(f"ℹ️ {room_name} sudah ada, dilewati.")
+    db.session.commit()
+    print("✅ Semua ruangan berhasil diinisialisasi.")
+
+app.cli.add_command(init_rooms)
 
 @app.route('/')
 def home():
@@ -179,6 +212,16 @@ def room_schedule(room_id):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if 'user_id' in session and 'role_id' in session:
+        # Jika sudah login, redirect ke dashboard sesuai role
+        user = User.query.get(session['user_id'])
+        if user:
+            if user.role_id == 1:
+                return redirect(url_for('admin_dashboard'))
+            elif user.role_id == 2:
+                return redirect(url_for('staff.staff_dashboard'))
+            elif user.role_id == 3:
+                return redirect(url_for('member.member_dashboard'))
     error = None
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
