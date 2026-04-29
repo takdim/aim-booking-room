@@ -498,6 +498,49 @@ def check_and_create_sanctions():
     
     return sanctions_created
 
+@member_bp.route('/check-booking-status', methods=['GET'])
+@member_required
+def check_booking_status():
+    """API endpoint untuk check apakah user bisa booking atau tidak"""
+    user = User.query.get(session['user_id'])
+    
+    # Cek profil lengkap
+    profile = UserProfile.query.filter_by(user_id=user.id).first()
+    if not profile or not profile.full_name or not profile.prodi:
+        return jsonify({
+            'can_book': False,
+            'reason': 'Lengkapi profil terlebih dahulu sebelum melakukan booking.'
+        })
+    
+    # Cek aktif booking
+    active_booking = Booking.query.filter(
+        Booking.user_id == user.id,
+        Booking.status == BookingStatus.APPROVED
+    ).first()
+    
+    if active_booking:
+        return jsonify({
+            'can_book': False,
+            'reason': 'Anda tidak dapat melakukan booking karena masih memiliki booking yang disetujui dan belum selesai. Satu member hanya dapat memiliki 1 booking aktif.'
+        })
+    
+    # Cek aktif sanctions
+    active_sanctions = Sanction.query.filter_by(
+        user_id=user.id, 
+        status=SanctionStatus.ACTIVE
+    ).count()
+    
+    if active_sanctions > 0:
+        return jsonify({
+            'can_book': False,
+            'reason': 'Anda tidak dapat melakukan booking karena memiliki sanksi aktif. Silakan selesaikan pembayaran sanksi terlebih dahulu.'
+        })
+    
+    return jsonify({
+        'can_book': True,
+        'reason': ''
+    })
+
 @member_bp.route('/sanctions')
 @member_required
 def member_sanctions():
@@ -533,29 +576,30 @@ def member_sanctions():
                          stats=stats,
                          current_status=status_filter)
 
-@member_bp.route('/bookings/<int:booking_id>/checkout', methods=['POST'])
-@member_required
-def checkout_booking(booking_id):
-    booking = Booking.query.get_or_404(booking_id)
-    
-    # Pastikan ini booking milik user yang login
-    if booking.user_id != session['user_id']:
-        flash('Akses ditolak', 'error')
-        return redirect(url_for('member.member_bookings'))
-    
-    # Pastikan booking dalam status approved
-    if booking.status != BookingStatus.APPROVED:
-        flash('Booking tidak dapat di-checkout', 'error')
-        return redirect(url_for('member.member_bookings'))
-    
-    # Checkout
-    booking.checkout_time = datetime.utcnow()
-    booking.status = BookingStatus.COMPLETED
-    
-    db.session.commit()
-    
-    flash('Checkout berhasil!', 'success')
-    return redirect(url_for('member.member_bookings'))
+# Route checkout sudah dipindahkan ke staff saja
+# @member_bp.route('/bookings/<int:booking_id>/checkout', methods=['POST'])
+# @member_required
+# def checkout_booking(booking_id):
+#     booking = Booking.query.get_or_404(booking_id)
+#     
+#     # Pastikan ini booking milik user yang login
+#     if booking.user_id != session['user_id']:
+#         flash('Akses ditolak', 'error')
+#         return redirect(url_for('member.member_bookings'))
+#     
+#     # Pastikan booking dalam status approved
+#     if booking.status != BookingStatus.APPROVED:
+#         flash('Booking tidak dapat di-checkout', 'error')
+#         return redirect(url_for('member.member_bookings'))
+#     
+#     # Checkout
+#     booking.checkout_time = datetime.utcnow()
+#     booking.status = BookingStatus.COMPLETED
+#     
+#     db.session.commit()
+#     
+#     flash('Checkout berhasil!', 'success')
+#     return redirect(url_for('member.member_bookings'))
 
 def get_user_active_sanctions_total(user_id):
     """Mendapatkan total sanksi aktif untuk user"""

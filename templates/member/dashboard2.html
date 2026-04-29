@@ -222,7 +222,24 @@
             modal.show();
             return;
         }
-        window.location.href = `/member/book/${roomId}`;
+        
+        // Check booking status before redirecting
+        fetch('/member/check-booking-status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.can_book) {
+                    window.location.href = `/member/book/${roomId}`;
+                } else {
+                    // Show error modal with booking restriction message
+                    document.getElementById('bookingErrorMessage').textContent = data.reason;
+                    const modal = new bootstrap.Modal(document.getElementById('bookingErrorModal'));
+                    modal.show();
+                }
+            })
+            .catch(error => {
+                console.error('Error checking booking status:', error);
+                window.location.href = `/member/book/${roomId}`;
+            });
     }
 
     
@@ -263,6 +280,28 @@
         <a href="/member/profile" class="btn btn-maroon">
           <i class="fas fa-user-edit me-1"></i>Ke Halaman Profil
         </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="bookingErrorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-danger">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-circle me-2" style="color: #c53030;"></i>Tidak Dapat Melakukan Booking
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger" role="alert">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <span id="bookingErrorMessage"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
       </div>
     </div>
   </div>

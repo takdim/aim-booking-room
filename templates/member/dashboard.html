@@ -182,10 +182,30 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Function to handle room booking
+        // Function to handle room booking with validation
         function bookRoom(roomId) {
-            // You can redirect to booking form or show a modal
-            window.location.href = `/member/book/${roomId}`;
+            // Check booking status via AJAX first
+            fetch('/member/check-booking-status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.can_book) {
+                        // Proceed to booking form
+                        window.location.href = `/member/book/${roomId}`;
+                    } else {
+                        // Show error modal with reason
+                        showRestrictionModal(data.reason);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan saat memeriksa status booking');
+                });
+        }
+        
+        function showRestrictionModal(reason) {
+            const modal = new bootstrap.Modal(document.getElementById('restrictionModal'));
+            document.getElementById('restrictionReason').textContent = reason;
+            modal.show();
         }
         
         // Smooth scrolling for anchor links
@@ -231,5 +251,30 @@
             });
         });
     </script>
+
+    <!-- Restriction Modal -->
+    <div class="modal fade" id="restrictionModal" tabindex="-1" backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-circle me-2"></i>Tidak Dapat Melakukan Booking
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0" id="restrictionReason"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Tutup
+                    </button>
+                    <a href="/member/bookings" class="btn btn-primary">
+                        <i class="fas fa-calendar me-1"></i>Lihat Booking Saya
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 {% endblock %}

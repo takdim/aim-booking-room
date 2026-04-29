@@ -207,8 +207,8 @@
               </span>
             </td>
             <td>
-              <span class="status-badge {% if sanction.status.value == 'ACTIVE' %}status-active{% else %}status-paid{% endif %}">
-                {{ "Belum Dibayar" if sanction.status.value == 'ACTIVE' else "Sudah Dibayar" }}
+              <span class="status-badge {% if sanction.status.value == 'active' %}status-active{% else %}status-paid{% endif %}">
+                {{ "Belum Dibayar" if sanction.status.value == 'active' else "Sudah Dibayar" }}
               </span>
             </td>
             <td>
@@ -218,7 +218,7 @@
               {% endif %}
             </td>
             <td>
-              {% if sanction.status.value == 'ACTIVE' %}
+              {% if sanction.status.value == 'active' %}
               <button class="btn-paid" onclick="markAsPaid({{ sanction.id }})">
                 <i class="fas fa-check me-1"></i>Tandai Dibayar
               </button>

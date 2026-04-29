@@ -428,13 +428,8 @@
                 <div class="card-footer">
                   <small class="text-muted">
                     <i class="fas fa-check-circle me-1"></i>
-                    Booking disetujui
+                    Booking disetujui. Ambil kunci di staff, staff akan melakukan checkout.
                   </small>
-                  <form method="post" action="{{ url_for('member.checkout_booking', booking_id=booking.id) }}" style="display: inline;">
-                    <button type="submit" class="btn btn-sm btn-success float-end" onclick="return confirm('Checkout sekarang?')">
-                      <i class="fas fa-sign-out-alt me-1"></i>Checkout
-                    </button>
-                  </form>
                 </div>
               {% elif booking.status.value == 'completed' %}
                 <div class="card-footer">

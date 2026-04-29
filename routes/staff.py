@@ -347,9 +347,7 @@ def checkout_booking(booking_id):
         if checkout_time > expected_end:
             booking.is_late = True
             
-            # Optional: Buat sanksi otomatis untuk keterlambatan
-            # Anda bisa uncomment kode dibawah jika ingin membuat sanksi otomatis
-            """
+            # Buat sanksi otomatis untuk keterlambatan
             late_minutes = booking.get_late_minutes()
             if late_minutes > 0:
                 # Buat sanksi (misalnya Rp 1000 per menit keterlambatan)
@@ -358,11 +356,11 @@ def checkout_booking(booking_id):
                     user_id=booking.user_id,
                     booking_id=booking.id,
                     amount=sanction_amount,
-                    reason=f'Terlambat checkout {late_minutes} menit',
-                    issued_by=current_user.id
+                    reason=f'Terlambat checkout {late_minutes} menit untuk booking ruang {booking.room.name} pada {booking.booking_date}',
+                    issued_by=session['user_id'],
+                    status=SanctionStatus.ACTIVE
                 )
                 db.session.add(sanction)
-            """
         
         # Simpan perubahan
         db.session.commit()

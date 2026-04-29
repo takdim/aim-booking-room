@@ -129,8 +129,7 @@ class Booking(db.Model):
         """Cek apakah booking bisa checkin"""
         return (
             self.status == BookingStatus.APPROVED and
-            self.checkin_time is None and
-            self.is_checkin_time()
+            self.checkin_time is None
         )
     
     def can_checkout(self):
