@@ -370,7 +370,14 @@
                       <div class="info-label">Tanggal</div>
                       <div class="info-value">
                         <i class="fas fa-calendar me-1"></i>
-                        {{ booking.booking_date.strftime('%d/%m/%Y') }}
+                        {% set dates_list = booking.get_booking_dates_list() %}
+                        {% if dates_list|length > 1 %}
+                          {% set last_date_str = dates_list[-1] %}
+                          {% set last_parts = last_date_str.split('-') %}
+                          {{ booking.booking_date.strftime('%d/%m/%Y') }} s/d {{ last_parts[2] }}/{{ last_parts[1] }}/{{ last_parts[0] }}
+                        {% else %}
+                          {{ booking.booking_date.strftime('%d/%m/%Y') }}
+                        {% endif %}
                       </div>
                     </div>
                   </div>
@@ -411,6 +418,33 @@
                     <i class="fas fa-hourglass-half me-1"></i>
                     Menunggu persetujuan admin
                   </small>
+                  <form method="post" action="{{ url_for('member.member_cancel_booking', booking_id=booking.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-sm btn-danger float-end" onclick="return confirm('Batalkan booking ini?')">
+                      <i class="fas fa-times me-1"></i>Batalkan
+                    </button>
+                  </form>
+                </div>
+              {% elif booking.status.value == 'approved' %}
+                <div class="card-footer">
+                  <small class="text-muted">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Booking disetujui
+                  </small>
+                  <form method="post" action="{{ url_for('member.checkout_booking', booking_id=booking.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-sm btn-success float-end" onclick="return confirm('Checkout sekarang?')">
+                      <i class="fas fa-sign-out-alt me-1"></i>Checkout
+                    </button>
+                  </form>
+                </div>
+              {% elif booking.status.value == 'completed' %}
+                <div class="card-footer">
+                  <small class="text-muted">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Booking selesai
+                  </small>
+                  <a href="{{ url_for('member.member_booking_detail', booking_id=booking.id) }}" class="btn btn-sm btn-info float-end">
+                    <i class="fas fa-eye me-1"></i>Detail
+                  </a>
                 </div>
               {% endif %}
             </div>

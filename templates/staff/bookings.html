@@ -1,0 +1,373 @@
+{% extends "staff/template.html" %}
+
+{% block content %}
+<style>
+  .hero-section {
+    background: #611514;
+    color: #fff;
+    padding: 40px 0 32px;
+  }
+
+  .hero-title {
+    font-size: clamp(1.9rem, 2.6vw + 1rem, 2.7rem);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .hero-subtitle {
+    opacity: 0.9;
+    margin-bottom: 24px;
+  }
+
+  .filters-section {
+    background: #fff;
+    margin-top: -12px;
+    padding: 20px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .filter-group label {
+    font-weight: 600;
+    color: #611514;
+    margin: 0;
+  }
+
+  .filter-group select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .main-content {
+    background: #fff;
+    min-height: 60vh;
+    box-shadow: 0 -8px 24px rgba(31, 10, 10, 0.08);
+  }
+
+  .content-padding {
+    padding: 30px;
+  }
+
+  .table {
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(31, 10, 10, 0.1);
+  }
+
+  .table thead th {
+    background: #611514;
+    color: #fff;
+    font-weight: 600;
+    border: none;
+    padding: 14px;
+  }
+
+  .table tbody td {
+    padding: 14px;
+    vertical-align: middle;
+    border-color: #f0f0f0;
+  }
+
+  .table tbody tr:hover {
+    background-color: #f7efef;
+  }
+
+  .status-badge {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .btn-detail {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: #611514;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-detail:hover {
+    background: #4a0f0c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(97, 21, 20, 0.3);
+  }
+
+  .no-data {
+    text-align: center;
+    color: #6a4a4a;
+    padding: 50px 0;
+  }
+
+  .no-data i {
+    font-size: 3rem;
+    margin-bottom: 18px;
+    color: #c9a3a3;
+  }
+
+  .modal-header {
+    background: #611514;
+    color: #fff;
+    border-bottom: none;
+  }
+
+  .modal-body {
+    padding: 24px;
+  }
+
+  .detail-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .detail-item {
+    padding: 12px;
+    background: #f7efef;
+    border-radius: 8px;
+  }
+
+  .detail-label {
+    font-size: 0.85rem;
+    color: #6a4a4a;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .detail-value {
+    font-size: 1rem;
+    color: #611514;
+    font-weight: 600;
+  }
+</style>
+
+<div class="hero-section">
+  <div class="container">
+    <h1 class="hero-title">
+      <i class="fas fa-list-ul me-2"></i>Kelola Booking
+    </h1>
+    <p class="hero-subtitle">
+      Lihat dan kelola semua booking ruangan
+    </p>
+  </div>
+</div>
+
+<div class="filters-section">
+  <div class="filter-group">
+    <label>Status:</label>
+    <select id="statusFilter" onchange="applyFilters()">
+      <option value="all">Semua</option>
+      <option value="pending" {% if current_filters.status == 'pending' %}selected{% endif %}>Pending</option>
+      <option value="approved" {% if current_filters.status == 'approved' %}selected{% endif %}>Approved</option>
+      <option value="completed" {% if current_filters.status == 'completed' %}selected{% endif %}>Completed</option>
+      <option value="cancelled" {% if current_filters.status == 'cancelled' %}selected{% endif %}>Rejected</option>
+    </select>
+  </div>
+
+  <div class="filter-group">
+    <label>Tanggal:</label>
+    <select id="dateFilter" onchange="applyFilters()">
+      <option value="all">Semua</option>
+      <option value="today" {% if current_filters.date == 'today' %}selected{% endif %}>Hari Ini</option>
+      <option value="tomorrow" {% if current_filters.date == 'tomorrow' %}selected{% endif %}>Besok</option>
+      <option value="this_week" {% if current_filters.date == 'this_week' %}selected{% endif %}>Minggu Ini</option>
+    </select>
+  </div>
+
+  <div class="filter-group">
+    <label>Ruangan:</label>
+    <select id="roomFilter" onchange="applyFilters()">
+      <option value="all">Semua Ruangan</option>
+      {% for room in rooms %}
+      <option value="{{ room.id }}" {% if current_filters.room == room.id|string %}selected{% endif %}>{{ room.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="container-fluid content-padding">
+    {% if bookings %}
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th><i class="fas fa-hashtag"></i> ID</th>
+            <th><i class="fas fa-user"></i> Member</th>
+            <th><i class="fas fa-door-open"></i> Ruangan</th>
+            <th><i class="fas fa-calendar"></i> Tanggal</th>
+            <th><i class="fas fa-clock"></i> Waktu</th>
+            <th><i class="fas fa-info-circle"></i> Status</th>
+            <th><i class="fas fa-tools"></i> Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in bookings %}
+          <tr>
+            <td><strong>#{{ "%03d"|format(item[0].id) }}</strong></td>
+            <td>
+              <strong>{{ item.username }}</strong><br>
+              <small class="text-muted">{{ item.email }}</small>
+            </td>
+            <td><span class="badge bg-primary">{{ item.room_name }}</span></td>
+            <td><strong>{{ item[0].booking_date.strftime('%d-%m-%Y') }}</strong></td>
+            <td>{{ item[0].start_time.strftime('%H:%M') }} - {{ item[0].end_time.strftime('%H:%M') }}</td>
+            <td>
+              <span class="status-badge" style="background: #{% if item[0].status.value == 'PENDING' %}f0a500{% elif item[0].status.value == 'APPROVED' %}2f9e44{% elif item[0].status.value == 'COMPLETED' %}2b6cb0{% elif item[0].status.value == 'CHECKED_IN' %}0d9488{% else %}c53030{% endif %}; color: #fff;">
+                {{ item[0].get_status_display() }}
+              </span>
+            </td>
+            <td>
+              <button class="btn-detail" onclick="showDetail({{ item[0].id }})">
+                <i class="fas fa-eye me-1"></i>Detail
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="no-data">
+      <i class="fas fa-inbox"></i>
+      <p>Tidak ada booking yang sesuai filter</p>
+      <small class="text-muted">Coba ubah filter atau cek kembali nanti</small>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-info-circle me-2"></i>Detail Booking
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="detailContent">
+        <div class="text-center">
+          <div class="spinner-border text-danger" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function applyFilters() {
+    const status = document.getElementById('statusFilter').value;
+    const date = document.getElementById('dateFilter').value;
+    const room = document.getElementById('roomFilter').value;
+    
+    const params = new URLSearchParams();
+    if (status !== 'all') params.append('status', status);
+    if (date !== 'all') params.append('date', date);
+    if (room !== 'all') params.append('room', room);
+    
+    window.location.href = `/staff/bookings?${params.toString()}`;
+  }
+
+  function showDetail(bookingId) {
+    const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+    
+    fetch(`/staff/bookings/detail/${bookingId}`)
+      .then(response => response.json())
+      .then(data => {
+        const html = `
+          <div class="detail-row">
+            <div class="detail-item">
+              <div class="detail-label">ID Booking</div>
+              <div class="detail-value">#${'000'.substring(data.id.toString().length) + data.id}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Status</div>
+              <div class="detail-value">
+                <span class="status-badge" style="background: #${data.status_value === 'PENDING' ? 'f0a500' : data.status_value === 'APPROVED' ? '2f9e44' : data.status_value === 'COMPLETED' ? '2b6cb0' : data.status_value === 'CHECKED_IN' ? '0d9488' : 'c53030'}; color: #fff;">
+                  ${data.status}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-item">
+              <div class="detail-label">Member</div>
+              <div class="detail-value">${data.member}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Email</div>
+              <div class="detail-value">${data.email}</div>
+            </div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-item">
+              <div class="detail-label">Ruangan</div>
+              <div class="detail-value">${data.room}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Tanggal</div>
+              <div class="detail-value">${data.date}</div>
+            </div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-item">
+              <div class="detail-label">Waktu Mulai</div>
+              <div class="detail-value">${data.start_time}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Waktu Selesai</div>
+              <div class="detail-value">${data.end_time}</div>
+            </div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-item">
+              <div class="detail-label">Checkin Time</div>
+              <div class="detail-value">${data.checkin_time}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Checkout Time</div>
+              <div class="detail-value">${data.checkout_time}</div>
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Tujuan Booking</div>
+            <div class="detail-value">${data.purpose}</div>
+          </div>
+        `;
+        
+        document.getElementById('detailContent').innerHTML = html;
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('detailContent').innerHTML = '<div class="alert alert-danger">Error loading detail</div>';
+      });
+    
+    modal.show();
+  }
+</script>
+
+{% endblock %}

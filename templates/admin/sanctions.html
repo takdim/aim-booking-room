@@ -1,0 +1,163 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>⚠️ Manajemen Sanksi</h2>
+        </div>
+        <div class="col-md-4 text-right">
+            <form method="post" action="{{ url_for('admin_check_late_bookings') }}" style="display: inline;">
+                <button type="submit" class="btn btn-warning">🔄 Cek Booking Terlambat</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Sanksi</h5>
+                    <h3>{{ stats.total }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Aktif</h5>
+                    <h3>{{ stats.active }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Lunas</h5>
+                    <h3>{{ stats.paid }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Hutang</h5>
+                    <h3>Rp {{ "{:,}".format(stats.total_active_amount|int).replace(',', '.') }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="form-inline">
+                <div class="form-group mr-3">
+                    <label for="status" class="mr-2">Status:</label>
+                    <select name="status" id="status" class="form-control form-control-sm">
+                        <option value="all" {% if current_filters.status == 'all' %}selected{% endif %}>Semua</option>
+                        <option value="active" {% if current_filters.status == 'active' %}selected{% endif %}>Aktif</option>
+                        <option value="paid" {% if current_filters.status == 'paid' %}selected{% endif %}>Lunas</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+                <a href="{{ url_for('admin_sanctions') }}" class="btn btn-sm btn-secondary ml-2">Reset</a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sanctions Table -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Member</th>
+                        <th>Alasan</th>
+                        <th>Jumlah</th>
+                        <th>Status</th>
+                        <th>Diterbitkan</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in sanctions.items %}
+                    <tr>
+                        <td>#{{ item[0].id }}</td>
+                        <td>{{ item.username }}</td>
+                        <td>{{ item[0].reason[:50] }}{% if item[0].reason|length > 50 %}...{% endif %}</td>
+                        <td><strong>Rp {{ "{:,}".format(item[0].amount|int).replace(',', '.') }}</strong></td>
+                        <td>
+                            <span class="badge badge-{{ 'danger' if item[0].status.value == 'active' else 'success' }}">
+                                {{ item[0].status.value.upper() }}
+                            </span>
+                        </td>
+                        <td>{{ item[0].issued_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                        <td>
+                            {% if item[0].status.value == 'active' %}
+                            <form method="post" action="{{ url_for('admin_mark_sanction_paid', sanction_id=item[0].id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Tandai sanksi ini sebagai lunas?')">
+                                    ✓ Tandai Lunas
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="badge badge-success">Telah Dibayar</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if sanctions.pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if sanctions.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_sanctions', page=sanctions.prev_num, status=current_filters.status) }}">
+                    Previous
+                </a>
+            </li>
+            {% endif %}
+
+            {% for page_num in sanctions.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num == sanctions.page %}
+                    <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_sanctions', page=page_num, status=current_filters.status) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+
+            {% if sanctions.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_sanctions', page=sanctions.next_num, status=current_filters.status) }}">
+                    Next
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .badge {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}

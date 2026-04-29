@@ -111,7 +111,7 @@ def reject_booking(booking_id):
         booking = Booking.query.get_or_404(booking_id)
         
         # Cek apakah booking masih dalam status pending
-        if booking.status != BookingStatus.PENDING.value:
+        if booking.status != BookingStatus.PENDING:
             return jsonify({
                 'success': False,
                 'message': 'Booking sudah diproses sebelumnya'
@@ -128,7 +128,7 @@ def reject_booking(booking_id):
             }), 400
         
         # Update status booking
-        booking.status = BookingStatus.REJECTED.value
+        booking.status = BookingStatus.REJECTED
         booking.approved_by = session['user_id']
         booking.approved_at = datetime.utcnow()
         
@@ -160,7 +160,7 @@ def cancel_booking(booking_id):
         booking = Booking.query.get_or_404(booking_id)
         
         # Cek apakah booking dalam status approved
-        if booking.status != BookingStatus.APPROVED.value:
+        if booking.status != BookingStatus.APPROVED:
             return jsonify({
                 'success': False,
                 'message': 'Hanya booking yang sudah disetujui yang dapat dibatalkan'
@@ -177,7 +177,7 @@ def cancel_booking(booking_id):
             }), 400
         
         # Update status booking
-        booking.status = BookingStatus.REJECTED.value
+        booking.status = BookingStatus.REJECTED
         
         db.session.commit()
         
@@ -193,38 +193,6 @@ def cancel_booking(booking_id):
             'message': f'Terjadi kesalahan: {str(e)}'
         }), 500
     
-@staff_bp.route('/booking/<int:booking_id>')
-@staff_required
-def booking_detail(booking_id):
-    """Route untuk melihat detail booking"""
-    booking = Booking.query.filter_by(id=booking_id)\
-        .join(User, Booking.user_id == User.id)\
-        .join(Room, Booking.room_id == Room.id)\
-        .add_columns(
-            User.username,
-            User.email,
-            Room.name.label('room_name'),
-            Room.description.label('room_description'),
-            Room.capacity.label('room_capacity')
-        ).first_or_404()
-    
-    # Ambil data approver jika ada
-    approver = None
-    if booking.Booking.approved_by:
-        approver = User.query.get(booking.Booking.approved_by)
-    
-    # Ambil profil user jika ada
-    user_profile = UserProfile.query.filter_by(user_id=booking.Booking.user_id).first()
-    
-    # Ambil data sanksi jika ada
-    sanctions = Sanction.query.filter_by(booking_id=booking_id).all()
-    
-    return render_template('staff/booking_detail.html',
-                         booking=booking,
-                         approver=approver,
-                         user_profile=user_profile,
-                         sanctions=sanctions)
-
 @staff_bp.route('/bookings')
 @staff_required
 def staff_bookings():
@@ -246,13 +214,13 @@ def staff_bookings():
     # Apply filters
     if status_filter != 'all':
         if status_filter == 'pending':
-            query = query.filter(Booking.status == BookingStatus.PENDING.value)
+            query = query.filter(Booking.status == BookingStatus.PENDING)
         elif status_filter == 'approved':
-            query = query.filter(Booking.status == BookingStatus.APPROVED.value)
+            query = query.filter(Booking.status == BookingStatus.APPROVED)
         elif status_filter == 'completed':
-            query = query.filter(Booking.status == BookingStatus.COMPLETED.value)
+            query = query.filter(Booking.status == BookingStatus.COMPLETED)
         elif status_filter == 'cancelled':
-            query = query.filter(Booking.status == BookingStatus.REJECTED.value)
+            query = query.filter(Booking.status == BookingStatus.REJECTED)
     
     if date_filter == 'today':
         query = query.filter(Booking.booking_date == date.today())
@@ -283,6 +251,35 @@ def staff_bookings():
                          },
                          today=date.today)
 
+@staff_bp.route('/bookings/detail/<int:booking_id>', methods=['GET'])
+@staff_required
+def get_booking_detail(booking_id):
+    """API endpoint untuk mendapatkan detail booking (JSON)"""
+    booking = Booking.query.get_or_404(booking_id)
+    
+    approver_name = None
+    if booking.approved_by:
+        approver = User.query.get(booking.approved_by)
+        approver_name = approver.username if approver else None
+    
+    return jsonify({
+        'id': booking.id,
+        'member': booking.user.username,
+        'email': booking.user.email,
+        'room': booking.room.name,
+        'date': booking.booking_date.strftime('%d-%m-%Y'),
+        'start_time': booking.start_time.strftime('%H:%M'),
+        'end_time': booking.end_time.strftime('%H:%M'),
+        'status': booking.get_status_display(),
+        'status_value': booking.status.value,
+        'purpose': booking.purpose or '-',
+        'checkin_time': booking.checkin_time.strftime('%d-%m-%Y %H:%M') if booking.checkin_time else '-',
+        'checkout_time': booking.checkout_time.strftime('%d-%m-%Y %H:%M') if booking.checkout_time else '-',
+        'is_late': booking.is_late,
+        'approver': approver_name or '-',
+        'approved_at': booking.approved_at.strftime('%d-%m-%Y %H:%M') if booking.approved_at else '-'
+    })
+
 @staff_bp.route('/checkin')
 @staff_required
 def staff_checkin():
@@ -293,7 +290,7 @@ def staff_checkin():
         .join(User, Booking.user_id == User.id)\
         .join(Room, Booking.room_id == Room.id)\
         .filter(
-            Booking.status == BookingStatus.APPROVED.value,
+            Booking.status == BookingStatus.APPROVED,
             Booking.checkin_time.is_(None)
         )\
         .add_columns(
@@ -309,7 +306,7 @@ def staff_checkin():
         .join(User, Booking.user_id == User.id)\
         .join(Room, Booking.room_id == Room.id)\
         .filter(
-            Booking.status == BookingStatus.CHECKED_IN.value,
+            Booking.status == BookingStatus.CHECKED_IN,
             Booking.checkout_time.is_(None)
         )\
         .add_columns(
@@ -343,7 +340,7 @@ def checkout_booking(booking_id):
         from datetime import datetime
         checkout_time = datetime.now()
         booking.checkout_time = checkout_time
-        booking.status = BookingStatus.COMPLETED.value
+        booking.status = BookingStatus.COMPLETED
         
         # Cek apakah checkout terlambat
         expected_end = datetime.combine(booking.booking_date, booking.end_time)
@@ -408,7 +405,7 @@ def checkin_booking(booking_id):
         
         # Lakukan checkin
         booking.checkin_time = datetime.now()
-        booking.status = BookingStatus.CHECKED_IN.value
+        booking.status = BookingStatus.CHECKED_IN
         
         # Simpan perubahan
         db.session.commit()
@@ -426,4 +423,41 @@ def checkin_booking(booking_id):
             'message': f'Terjadi kesalahan: {str(e)}'
         }), 500
 
+@staff_bp.route('/rooms')
+@staff_required
+def staff_rooms():
+    """Staff view untuk melihat daftar ruangan"""
+    rooms = Room.query.filter_by(is_active=True).all()
+    
+    return render_template('staff/rooms.html', rooms=rooms)
 
+@staff_bp.route('/sanctions')
+@staff_required
+def staff_sanctions():
+    """Staff view untuk melihat sanksi member"""
+    sanctions = Sanction.query.order_by(Sanction.issued_at.desc()).all()
+    
+    # Calculate statistics
+    active_sanctions = [s for s in sanctions if s.status == SanctionStatus.ACTIVE]
+    paid_sanctions = [s for s in sanctions if s.status == SanctionStatus.PAID]
+    total_active_amount = sum(s.amount for s in active_sanctions)
+    
+    return render_template('staff/sanctions.html', 
+                         sanctions=sanctions,
+                         active_sanctions=active_sanctions,
+                         paid_sanctions=paid_sanctions,
+                         total_active_amount=total_active_amount)
+
+@staff_bp.route('/sanctions/<int:sanction_id>/mark-paid', methods=['POST'])
+@staff_required
+def mark_sanction_paid(sanction_id):
+    """Mark sanction as paid"""
+    sanction = Sanction.query.get_or_404(sanction_id)
+    
+    if sanction.status == SanctionStatus.ACTIVE:
+        sanction.status = SanctionStatus.PAID
+        sanction.paid_at = datetime.utcnow()
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Sanksi marked as paid'})
+    
+    return jsonify({'success': False, 'message': 'Sanction is already paid'}), 400

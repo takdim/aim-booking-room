@@ -110,5 +110,63 @@ block content %}
       </div>
     </div>
   </div>
+  
+  <!-- New Features Row -->
+  <div class="col-md-6">
+    <br />
+    <div class="card">
+      <div class="card-header bg-success text-white">
+        <h5><i class="fas fa-calendar-check"></i> Manajemen Booking</h5>
+      </div>
+      <div class="card-body">
+        <p>Lihat, setujui, dan kelola semua booking dari member.</p>
+        <a href="{{ url_for('admin_bookings') }}" class="btn btn-success">
+          <i class="fas fa-calendar-check"></i> Lihat Booking
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <br />
+    <div class="card">
+      <div class="card-header bg-danger text-white">
+        <h5><i class="fas fa-exclamation-triangle"></i> Manajemen Sanksi</h5>
+      </div>
+      <div class="card-body">
+        <p>Kelola denda dan sanksi member atas keterlambatan.</p>
+        <a href="{{ url_for('admin_sanctions') }}" class="btn btn-danger">
+          <i class="fas fa-exclamation-triangle"></i> Lihat Sanksi
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <br />
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h5><i class="fas fa-calendar"></i> Kalender Booking</h5>
+      </div>
+      <div class="card-body">
+        <p>Lihat jadwal booking dalam format kalender bulanan.</p>
+        <a href="{{ url_for('admin_calendar') }}" class="btn btn-info">
+          <i class="fas fa-calendar"></i> Lihat Kalender
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <br />
+    <div class="card">
+      <div class="card-header bg-warning text-dark">
+        <h5><i class="fas fa-chart-bar"></i> Analytics Dashboard</h5>
+      </div>
+      <div class="card-body">
+        <p>Analisis dan statistik booking, rooms, dan member.</p>
+        <a href="{{ url_for('admin_analytics') }}" class="btn btn-warning">
+          <i class="fas fa-chart-bar"></i> Lihat Analytics
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

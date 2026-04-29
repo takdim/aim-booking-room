@@ -1,0 +1,245 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>📊 Analytics Dashboard</h2>
+        </div>
+    </div>
+
+    <!-- Key Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Total Users</h5>
+                    <h2 class="text-primary">{{ stats.total_users }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Total Rooms</h5>
+                    <h2 class="text-info">{{ stats.total_rooms }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Total Bookings</h5>
+                    <h2 class="text-success">{{ stats.total_bookings }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Completion Rate</h5>
+                    <h2 class="text-warning">{{ stats.completion_rate }}%</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Late Checkouts</h5>
+                    <h2 class="text-danger">{{ stats.late_checkouts }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Active Sanctions</h5>
+                    <h2 class="text-secondary">{{ stats.total_sanctions }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <!-- Booking Status Distribution -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Booking Status Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Rooms -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Top 5 Ruangan</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="roomsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row mb-4">
+        <!-- Booking Trend -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Booking Trend (30 Hari Terakhir)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Members -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0">Top 5 Members</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <tbody>
+                                {% for member in top_members %}
+                                <tr>
+                                    <td>{{ member[0] }}</td>
+                                    <td><span class="badge badge-primary">{{ member[1] }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Row -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Ringkasan Pendapatan Sanksi</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>Total Sanksi Aktif</h6>
+                            <h3 class="text-danger">Rp {{ "{:,}".format(stats.total_sanctions_amount).replace(',', '.') }}</h3>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Jumlah Kasus</h6>
+                            <h3 class="text-warning">{{ stats.total_sanctions }}</h3>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Rata-rata per Kasus</h6>
+                            <h3 class="text-info">
+                                Rp {{ "{:,}".format((stats.total_sanctions_amount / stats.total_sanctions)|int if stats.total_sanctions > 0 else 0).replace(',', '.') }}
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    // Status Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ chart_data.status_labels | tojson }},
+            datasets: [{
+                data: {{ chart_data.status_values | tojson }},
+                backgroundColor: [
+                    '#FFC107', '#17A2B8', '#007BFF', '#28A745', '#DC3545'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Rooms Chart
+    const roomsCtx = document.getElementById('roomsChart').getContext('2d');
+    new Chart(roomsCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ chart_data.room_labels | tojson }},
+            datasets: [{
+                label: 'Jumlah Booking',
+                data: {{ chart_data.room_values | tojson }},
+                backgroundColor: '#17A2B8'
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y',
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Trend Chart
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_data.trend_labels | tojson }},
+            datasets: [{
+                label: 'Booking per Hari',
+                data: {{ chart_data.trend_values | tojson }},
+                borderColor: '#28A745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true
+                }
+            }
+        }
+    });
+</script>
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1.5rem;
+    }
+    .card-header {
+        border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    }
+    .badge {
+        padding: 0.5rem 0.75rem;
+    }
+</style>
+{% endblock %}

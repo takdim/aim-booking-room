@@ -20,8 +20,34 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
-                            <i class="fas fa-dashboard"></i> Dashboard
+                            <i class="fas fa-chart-line"></i> Dashboard
                         </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="bookingDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-calendar-check"></i> Booking
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('admin_bookings') }}">📋 Manajemen Booking</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_calendar') }}">📅 Kalender</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_sanctions') }}">⚠️ Sanksi/Denda</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_analytics') }}">
+                            <i class="fas fa-chart-bar"></i> Analytics
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="masterDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-database"></i> Master Data
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('admin_users') }}">👥 Users</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_rooms') }}">🚪 Rooms</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_roles') }}">🔐 Roles</a></li>
+                        </ul>
                     </li>
                 </ul>
                 <ul class="navbar-nav">

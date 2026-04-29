@@ -1,0 +1,126 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>📅 Kalender Booking - {{ month_name }} {{ current_year }}</h2>
+        </div>
+        <div class="col-md-4">
+            <form method="get" class="form-inline float-right">
+                <select name="room" id="room" class="form-control form-control-sm mr-2">
+                    <option value="all" {% if current_room == 'all' %}selected{% endif %}>Semua Ruangan</option>
+                    {% for room in rooms %}
+                    <option value="{{ room.id }}" {% if current_room == room.id|string %}selected{% endif %}>{{ room.name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="month" value="{{ current_month }}">
+                <input type="hidden" name="year" value="{{ current_year }}">
+                <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Calendar Navigation -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <a href="{{ prev_link }}" class="btn btn-secondary btn-sm">← Bulan Sebelumnya</a>
+                </div>
+                <div class="col-md-4 text-center">
+                    <h4>{{ month_name }} {{ current_year }}</h4>
+                </div>
+                <div class="col-md-4 text-right">
+                    <a href="{{ next_link }}" class="btn btn-secondary btn-sm">Bulan Berikutnya →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="text-center" style="width: 14%">Minggu</th>
+                        <th class="text-center" style="width: 14%">Senin</th>
+                        <th class="text-center" style="width: 14%">Selasa</th>
+                        <th class="text-center" style="width: 14%">Rabu</th>
+                        <th class="text-center" style="width: 14%">Kamis</th>
+                        <th class="text-center" style="width: 14%">Jumat</th>
+                        <th class="text-center" style="width: 14%">Sabtu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week in calendar_data %}
+                    <tr style="height: 150px;">
+                        {% for day_info in week %}
+                        <td style="vertical-align: top; overflow-y: auto; background-color: {% if day_info == None %}#f8f9fa{% elif day_info.is_today %}#e7f3ff{% else %}#fff{% endif %};">
+                            {% if day_info %}
+                            <div style="font-weight: bold; margin-bottom: 8px;">{{ day_info.day }}</div>
+                            {% if day_info.booking_count > 0 %}
+                            <div style="font-size: 0.75rem;">
+                                <span class="badge badge-info">{{ day_info.booking_count }} booking</span>
+                                <div style="margin-top: 6px; max-height: 100px; overflow-y: auto;">
+                                    {% for booking in day_info.bookings %}
+                                    <div style="background: #f0f0f0; padding: 3px; margin: 2px 0; border-radius: 3px; font-size: 0.7rem;">
+                                        <strong>{{ booking.room }}</strong><br>
+                                        {{ booking.time }}<br>
+                                        <span style="color: #666;">{{ booking.user }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Keterangan:</h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div style="background: #e7f3ff; padding: 10px; border-radius: 5px; text-align: center;">
+                                Hari Ini
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="badge badge-info">Booking Approved</span>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="badge badge-success">Booking Completed</span>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="badge badge-warning">Booking Pending</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .table-bordered td {
+        border: 1px solid #dee2e6;
+    }
+    .table-bordered th {
+        border: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}

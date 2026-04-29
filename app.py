@@ -48,6 +48,25 @@ migrate = Migrate(app, db)
 app.register_blueprint(member_bp)
 app.register_blueprint(staff_bp)
 
+# ===== ERROR HANDLERS =====
+@app.errorhandler(404)
+def page_not_found(error):
+    """Handle 404 errors"""
+    return render_template('errors/404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    """Handle 500 errors"""
+    db.session.rollback()
+    return render_template('errors/500.html'), 500
+
+@app.errorhandler(403)
+def forbidden(error):
+    """Handle 403 errors"""
+    return render_template('errors/403.html'), 403
+
+# ===== CLI COMMANDS =====
+
 # CLI command: flask init-data
 @click.command('init-data')
 @with_appcontext
@@ -101,6 +120,19 @@ def init_rooms():
     print("✅ Semua ruangan berhasil diinisialisasi.")
 
 app.cli.add_command(init_rooms)
+
+@click.command('check-late-bookings')
+@with_appcontext
+def check_late_bookings():
+    """Cek booking yang terlambat dan buat sanksi otomatis"""
+    from routes.member import check_and_create_sanctions
+    count = check_and_create_sanctions()
+    if count == 0:
+        print("ℹ️ Tidak ada booking baru yang terlambat.")
+    else:
+        print(f"✅ {count} sanksi baru telah dibuat untuk booking terlambat.")
+
+app.cli.add_command(check_late_bookings)
 
 @app.route('/')
 def home():
@@ -709,6 +741,337 @@ def admin_room_detail(room_id):
                          room=room, 
                          room_stats=room_stats, 
                          recent_bookings=recent_bookings)
+
+# ===== ADMIN BOOKINGS MANAGEMENT =====
+
+@app.route('/admin/bookings')
+@admin_required
+def admin_bookings():
+    """Admin page untuk melihat dan mengelola semua bookings"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 15
+    status_filter = request.args.get('status', 'all')
+    room_filter = request.args.get('room', 'all')
+    
+    query = Booking.query.join(User, Booking.user_id == User.id).join(Room)
+    
+    # Apply filters
+    if status_filter != 'all':
+        query = query.filter(Booking.status == BookingStatus(status_filter))
+    
+    if room_filter != 'all':
+        query = query.filter(Room.id == int(room_filter))
+    
+    bookings = query.order_by(Booking.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    # Get rooms untuk filter dropdown
+    rooms = Room.query.filter_by(is_active=True).all()
+    
+    # Statistics
+    stats = {
+        'total': Booking.query.count(),
+        'pending': Booking.query.filter_by(status=BookingStatus.PENDING).count(),
+        'approved': Booking.query.filter_by(status=BookingStatus.APPROVED).count(),
+        'checked_in': Booking.query.filter_by(status=BookingStatus.CHECKED_IN).count(),
+        'completed': Booking.query.filter_by(status=BookingStatus.COMPLETED).count(),
+        'rejected': Booking.query.filter_by(status=BookingStatus.REJECTED).count(),
+    }
+    
+    return render_template('admin/bookings.html', 
+                         bookings=bookings,
+                         rooms=rooms,
+                         current_filters={
+                             'status': status_filter,
+                             'room': room_filter
+                         },
+                         stats=stats)
+
+@app.route('/admin/bookings/<int:booking_id>')
+@admin_required
+def admin_booking_detail(booking_id):
+    """Detail view untuk booking tertentu"""
+    booking = Booking.query.get_or_404(booking_id)
+    user_profile = UserProfile.query.filter_by(user_id=booking.user_id).first()
+    approver = None
+    if booking.approved_by:
+        approver = User.query.get(booking.approved_by)
+    sanctions = Sanction.query.filter_by(booking_id=booking_id).all()
+    
+    return render_template('admin/booking_detail.html',
+                         booking=booking,
+                         user_profile=user_profile,
+                         approver=approver,
+                         sanctions=sanctions)
+
+@app.route('/admin/bookings/<int:booking_id>/approve', methods=['POST'])
+@admin_required
+def admin_approve_booking(booking_id):
+    """Admin approve booking"""
+    booking = Booking.query.get_or_404(booking_id)
+    
+    if booking.status != BookingStatus.PENDING:
+        flash('Hanya booking pending yang dapat disetujui', 'error')
+    else:
+        booking.status = BookingStatus.APPROVED
+        booking.approved_by = session['user_id']
+        booking.approved_at = datetime.utcnow()
+        db.session.commit()
+        flash('Booking berhasil disetujui', 'success')
+    
+    return redirect(url_for('admin_booking_detail', booking_id=booking_id))
+
+@app.route('/admin/bookings/<int:booking_id>/reject', methods=['POST'])
+@admin_required
+def admin_reject_booking(booking_id):
+    """Admin reject booking"""
+    booking = Booking.query.get_or_404(booking_id)
+    reason = request.form.get('reason', '')
+    
+    if booking.status != BookingStatus.PENDING:
+        flash('Hanya booking pending yang dapat ditolak', 'error')
+    else:
+        booking.status = BookingStatus.REJECTED
+        booking.approved_by = session['user_id']
+        booking.approved_at = datetime.utcnow()
+        if reason:
+            booking.purpose = f"[REJECTED] {reason}\n\nOriginal: {booking.purpose}" if booking.purpose else f"[REJECTED] {reason}"
+        db.session.commit()
+        flash('Booking berhasil ditolak', 'success')
+    
+    return redirect(url_for('admin_booking_detail', booking_id=booking_id))
+
+# ===== ADMIN SANCTIONS MANAGEMENT =====
+
+@app.route('/admin/sanctions')
+@admin_required
+def admin_sanctions():
+    """Admin page untuk melihat dan mengelola semua sanksi"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 15
+    status_filter = request.args.get('status', 'all')
+    
+    query = Sanction.query.join(User, Sanction.user_id == User.id).join(Booking, Sanction.booking_id == Booking.id)
+    
+    # Apply filter
+    if status_filter != 'all':
+        query = query.filter(Sanction.status == SanctionStatus(status_filter))
+    
+    sanctions = query.order_by(Sanction.issued_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    # Statistics
+    stats = {
+        'total': Sanction.query.count(),
+        'active': Sanction.query.filter_by(status=SanctionStatus.ACTIVE).count(),
+        'paid': Sanction.query.filter_by(status=SanctionStatus.PAID).count(),
+        'total_active_amount': db.session.query(db.func.sum(Sanction.amount)).filter_by(status=SanctionStatus.ACTIVE).scalar() or 0
+    }
+    
+    return render_template('admin/sanctions.html',
+                         sanctions=sanctions,
+                         current_filters={'status': status_filter},
+                         stats=stats)
+
+@app.route('/admin/sanctions/<int:sanction_id>/mark-paid', methods=['POST'])
+@admin_required
+def admin_mark_sanction_paid(sanction_id):
+    """Mark sanction as paid"""
+    sanction = Sanction.query.get_or_404(sanction_id)
+    
+    if sanction.status == SanctionStatus.PAID:
+        flash('Sanksi ini sudah ditandai sebagai lunas', 'info')
+    else:
+        sanction.status = SanctionStatus.PAID
+        sanction.paid_at = datetime.utcnow()
+        db.session.commit()
+        flash('Sanksi berhasil ditandai sebagai lunas', 'success')
+    
+    return redirect(url_for('admin_sanctions'))
+
+@app.route('/admin/check-late-bookings', methods=['POST'])
+@admin_required
+def admin_check_late_bookings():
+    """Trigger check and create sanctions for late bookings"""
+    from routes.member import check_and_create_sanctions
+    count = check_and_create_sanctions()
+    
+    if count == 0:
+        flash('Tidak ada booking baru yang terlambat.', 'info')
+    else:
+        flash(f'{count} sanksi baru telah dibuat untuk booking terlambat.', 'success')
+    
+    return redirect(url_for('admin_sanctions'))
+
+# ===== ANALYTICS DASHBOARD =====
+
+@app.route('/admin/analytics')
+@admin_required
+def admin_analytics():
+    """Admin analytics dashboard"""
+    from datetime import timedelta
+    
+    # Date range (default: last 30 days)
+    end_date = date.today()
+    start_date = end_date - timedelta(days=30)
+    
+    # Overall Statistics
+    total_users = User.query.count()
+    total_rooms = Room.query.count()
+    total_bookings = Booking.query.count()
+    total_completed = Booking.query.filter_by(status=BookingStatus.COMPLETED).count()
+    total_sanctions = Sanction.query.count()
+    total_sanctions_amount = db.session.query(db.func.sum(Sanction.amount)).scalar() or 0
+    
+    # Bookings by status
+    status_stats = {
+        'pending': Booking.query.filter_by(status=BookingStatus.PENDING).count(),
+        'approved': Booking.query.filter_by(status=BookingStatus.APPROVED).count(),
+        'checked_in': Booking.query.filter_by(status=BookingStatus.CHECKED_IN).count(),
+        'completed': total_completed,
+        'rejected': Booking.query.filter_by(status=BookingStatus.REJECTED).count(),
+    }
+    
+    # Top 5 rooms by booking count
+    top_rooms = db.session.query(
+        Room.name,
+        db.func.count(Booking.id).label('booking_count')
+    ).join(Booking).group_by(Room.id).order_by(
+        db.func.count(Booking.id).desc()
+    ).limit(5).all()
+    
+    # Booking trend (last 30 days)
+    booking_trend = db.session.query(
+        Booking.booking_date,
+        db.func.count(Booking.id).label('count')
+    ).filter(
+        Booking.booking_date.between(start_date, end_date)
+    ).group_by(Booking.booking_date).order_by(
+        Booking.booking_date
+    ).all()
+    
+    # Top members by booking count
+    top_members = db.session.query(
+        User.username,
+        db.func.count(Booking.id).label('booking_count')
+    ).join(Booking, Booking.user_id == User.id).group_by(User.id).order_by(
+        db.func.count(Booking.id).desc()
+    ).limit(5).all()
+    
+    # Active vs Completed bookings ratio
+    late_checkouts = Booking.query.filter_by(is_late=True).count()
+    
+    # Prepare data for charts
+    chart_data = {
+        'status_labels': list(status_stats.keys()),
+        'status_values': list(status_stats.values()),
+        'room_labels': [room[0] for room in top_rooms],
+        'room_values': [room[1] for room in top_rooms],
+        'member_labels': [member[0] for member in top_members],
+        'member_values': [member[1] for member in top_members],
+        'trend_labels': [str(booking[0]) for booking in booking_trend],
+        'trend_values': [booking[1] for booking in booking_trend],
+    }
+    
+    stats = {
+        'total_users': total_users,
+        'total_rooms': total_rooms,
+        'total_bookings': total_bookings,
+        'total_completed': total_completed,
+        'completion_rate': round((total_completed / total_bookings * 100) if total_bookings > 0 else 0, 1),
+        'total_sanctions': total_sanctions,
+        'total_sanctions_amount': int(total_sanctions_amount),
+        'late_checkouts': late_checkouts,
+        'status_stats': status_stats,
+    }
+    
+    return render_template('admin/analytics.html',
+                         stats=stats,
+                         chart_data=chart_data,
+                         top_rooms=top_rooms,
+                         top_members=top_members)
+
+@app.route('/admin/calendar')
+@admin_required
+def admin_calendar():
+    """Booking calendar view"""
+    room_id = request.args.get('room', 'all')
+    month = request.args.get('month', date.today().month, type=int)
+    year = request.args.get('year', date.today().year, type=int)
+    
+    rooms = Room.query.filter_by(is_active=True).all()
+    
+    # Get calendar data
+    import calendar
+    cal = calendar.monthcalendar(year, month)
+    
+    # Get all bookings for the month
+    month_start = date(year, month, 1)
+    if month == 12:
+        month_end = date(year + 1, 1, 1) - timedelta(days=1)
+    else:
+        month_end = date(year, month + 1, 1) - timedelta(days=1)
+    
+    query = Booking.query.filter(
+        Booking.booking_date.between(month_start, month_end),
+        Booking.status.in_([BookingStatus.APPROVED, BookingStatus.CHECKED_IN, BookingStatus.COMPLETED])
+    )
+    
+    if room_id != 'all':
+        query = query.filter(Booking.room_id == int(room_id))
+    
+    bookings = query.all()
+    
+    # Prepare booking data by date
+    booking_by_date = {}
+    for booking in bookings:
+        date_str = booking.booking_date.strftime('%Y-%m-%d')
+        if date_str not in booking_by_date:
+            booking_by_date[date_str] = []
+        booking_by_date[date_str].append({
+            'room': booking.room.name,
+            'user': booking.user.username,
+            'status': booking.status.value,
+            'time': f"{booking.start_time.strftime('%H:%M')}-{booking.end_time.strftime('%H:%M')}"
+        })
+    
+    # Prepare calendar with booking info
+    calendar_data = []
+    for week in cal:
+        week_data = []
+        for day in week:
+            if day == 0:
+                week_data.append(None)
+            else:
+                day_date = date(year, month, day)
+                date_str = day_date.strftime('%Y-%m-%d')
+                day_bookings = booking_by_date.get(date_str, [])
+                week_data.append({
+                    'day': day,
+                    'date': date_str,
+                    'booking_count': len(day_bookings),
+                    'bookings': day_bookings,
+                    'is_today': day_date == date.today()
+                })
+        calendar_data.append(week_data)
+    
+    # Navigation
+    prev_month = month - 1 if month > 1 else 12
+    prev_year = year if month > 1 else year - 1
+    next_month = month + 1 if month < 12 else 1
+    next_year = year if month < 12 else year + 1
+    
+    return render_template('admin/calendar.html',
+                         calendar_data=calendar_data,
+                         rooms=rooms,
+                         current_room=room_id,
+                         current_month=month,
+                         current_year=year,
+                         month_name=calendar.month_name[month],
+                         prev_link=f"?room={room_id}&month={prev_month}&year={prev_year}",
+                         next_link=f"?room={room_id}&month={next_month}&year={next_year}")
 
 
 # Untuk menjalankan langsung dengan python app.py

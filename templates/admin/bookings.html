@@ -1,0 +1,180 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>📋 Manajemen Booking</h2>
+        </div>
+    </div>
+    
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total</h5>
+                    <h3>{{ stats.total }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending</h5>
+                    <h3>{{ stats.pending }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Disetujui</h5>
+                    <h3>{{ stats.approved }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Check-in</h5>
+                    <h3>{{ stats.checked_in }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Selesai</h5>
+                    <h3>{{ stats.completed }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Ditolak</h5>
+                    <h3>{{ stats.rejected }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="form-inline">
+                <div class="form-group mr-3">
+                    <label for="status" class="mr-2">Status:</label>
+                    <select name="status" id="status" class="form-control form-control-sm">
+                        <option value="all" {% if current_filters.status == 'all' %}selected{% endif %}>Semua</option>
+                        <option value="pending" {% if current_filters.status == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="approved" {% if current_filters.status == 'approved' %}selected{% endif %}>Disetujui</option>
+                        <option value="checked_in" {% if current_filters.status == 'checked_in' %}selected{% endif %}>Check-in</option>
+                        <option value="completed" {% if current_filters.status == 'completed' %}selected{% endif %}>Selesai</option>
+                        <option value="rejected" {% if current_filters.status == 'rejected' %}selected{% endif %}>Ditolak</option>
+                    </select>
+                </div>
+                <div class="form-group mr-3">
+                    <label for="room" class="mr-2">Ruangan:</label>
+                    <select name="room" id="room" class="form-control form-control-sm">
+                        <option value="all" {% if current_filters.room == 'all' %}selected{% endif %}>Semua</option>
+                        {% for room in rooms %}
+                        <option value="{{ room.id }}" {% if current_filters.room == room.id|string %}selected{% endif %}>{{ room.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+                <a href="{{ url_for('admin_bookings') }}" class="btn btn-sm btn-secondary ml-2">Reset</a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Member</th>
+                        <th>Ruangan</th>
+                        <th>Tanggal</th>
+                        <th>Jam</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in bookings.items %}
+                    <tr>
+                        <td>#{{ item[0].id }}</td>
+                        <td>{{ item.username }}</td>
+                        <td>{{ item.room_name }}</td>
+                        <td>{{ item[0].booking_date.strftime('%d-%m-%Y') }}</td>
+                        <td>{{ item[0].start_time.strftime('%H:%M') }} - {{ item[0].end_time.strftime('%H:%M') }}</td>
+                        <td>
+                            <span class="badge badge-{{ item[0].get_status_color() }}">
+                                {{ item[0].get_status_display() }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin_booking_detail', booking_id=item[0].id) }}" class="btn btn-sm btn-info">
+                                Detail
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if bookings.pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if bookings.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_bookings', page=bookings.prev_num, status=current_filters.status, room=current_filters.room) }}">
+                    Previous
+                </a>
+            </li>
+            {% endif %}
+
+            {% for page_num in bookings.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num == bookings.page %}
+                    <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_bookings', page=page_num, status=current_filters.status, room=current_filters.room) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+
+            {% if bookings.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_bookings', page=bookings.next_num, status=current_filters.status, room=current_filters.room) }}">
+                    Next
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .badge {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}

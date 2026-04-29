@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Kesalahan Server</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .error-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+        }
+        .error-code {
+            font-size: 80px;
+            font-weight: bold;
+            color: #f5576c;
+            margin-bottom: 10px;
+        }
+        .error-title {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .error-message {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .error-btn {
+            display: inline-block;
+            background: #f5576c;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+        .error-btn:hover {
+            background: #f093fb;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-code">500</div>
+        <div class="error-title">Kesalahan Server Internal</div>
+        <div class="error-message">
+            Maaf, terjadi kesalahan pada server kami. 
+            Tim teknis kami sedang menangani masalah ini. Silakan coba lagi nanti.
+        </div>
+        <a href="{{ url_for('home') }}" class="error-btn">Kembali ke Beranda</a>
+    </div>
+</body>
+</html>

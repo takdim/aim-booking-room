@@ -65,12 +65,10 @@ class Booking(db.Model):
     purpose = db.Column(db.Text)
     approved_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     approved_at = db.Column(db.DateTime)
-    checkout_time = db.Column(db.DateTime)
-    is_late = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     checkin_time = db.Column(db.DateTime)
     checkout_time = db.Column(db.DateTime)
     is_late = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Index untuk meningkatkan performance query
     __table_args__ = (
